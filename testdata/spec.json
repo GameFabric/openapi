@@ -1,0 +1,150 @@
+{
+  "components": {
+    "schemas": {
+      "openapi_test.TestObject": {
+        "properties": {
+          "test1": {
+            "description": "Some test docs",
+            "type": "string"
+          },
+          "test2": {
+            "readOnly": true,
+            "type": "string"
+          },
+          "test3": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "test3"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Test Server",
+    "version": "1"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/test/{name}": {
+      "post": {
+        "operationId": "test-id",
+        "parameters": [
+          {
+            "description": "the item name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "the filter number",
+            "in": "query",
+            "name": "filter",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "the customer param",
+            "in": "query",
+            "name": "custom",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openapi_test.TestObject"
+              }
+            },
+            "text/html": {
+              "schema": {
+                "$ref": "#/components/schemas/openapi_test.TestObject"
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "$ref": "#/components/schemas/openapi_test.TestObject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openapi_test.TestObject"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/openapi_test.TestObject"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "test",
+        "tags": [
+          "test-tag"
+        ]
+      }
+    },
+    "/handler": {
+      "get": {
+        "operationId": "test-handler",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "test": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "204": {
+            "description": "OK"
+          }
+        },
+        "summary": "test handler",
+        "tags": [
+          "handler"
+        ]
+      }
+    }
+  }
+}

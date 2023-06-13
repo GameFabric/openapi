@@ -1,0 +1,74 @@
+variables:
+  # Enable timing info in job log for each script line
+  FF_SCRIPT_SECTIONS: "true"
+  FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: fastest # same as above, but for caches
+
+# Default rules
+
+.default_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null &&  $CI_PIPELINE_SOURCE != "schedule"
+
+stages:
+  - lint
+  - test
+
+default:
+  tags:
+    - b2b-cluster
+
+# Lint
+
+lint:go:
+  stage: lint
+  image: golangci/golangci-lint:v1.54.2-alpine
+  cache:
+    - key: "go-lint-cache"
+      paths:
+        - .lint-cache
+  variables:
+    GOLANGCI_LINT_CACHE: $CI_PROJECT_DIR/.lint-cache
+  script:
+    - golangci-lint run --timeout=5m --out-format code-climate:gl-code-quality-report.json,line-number
+  interruptible: true
+  allow_failure: false
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    paths:
+      - gl-code-quality-report.json
+  rules:
+    - !reference [ .default_rules, rules ]
+
+# Test
+
+test:go:
+  stage: test
+  image: golang:1.21-bullseye
+  needs:
+    - lint:go
+  cache:
+    - key: "go-cache"
+      paths:
+        - .go-cache
+    - key: "go-mod-cache"
+      paths:
+        - .go-mods
+  variables:
+    GOCACHE: $CI_PROJECT_DIR/.go-cache
+    GOMODCACHE: $CI_PROJECT_DIR/.go-mods
+  coverage: /\(statements\)(?:\s+)?(\d+(?:\.\d+)?%)/
+  script:
+    - go install github.com/jstemmer/go-junit-report/v2@v2.0.0
+    - go test -race $(go list ./... | grep -v /vendor/) -v -coverprofile profile.cov | go-junit-report -set-exit-code -iocopy -out report.xml
+    - go tool cover -func profile.cov
+  interruptible: true
+  allow_failure: false
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  rules:
+    - !reference [ .default_rules, rules ]

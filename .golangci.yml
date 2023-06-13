@@ -1,0 +1,47 @@
+run:
+  tests: false
+  timeout: 5m
+
+linters-settings:
+  cyclop:
+    max-complexity: 15
+    skip-tests: true
+  lll:
+    line-length: 130
+  gofumpt:
+    extra-rules: true
+
+linters:
+  enable-all: true
+  disable:
+    - interfacer # deprecated
+    - scopelint # deprecated
+    - maligned # deprecated
+    - golint # deprecated
+    - gocyclo # duplicate of cyclop
+    - structcheck # deprecated
+    - ifshort # deprecated
+    - varcheck # deprecated
+    - deadcode # deprecated
+    - nosnakecase # deprecated
+    - exhaustivestruct # deprecated
+    - depguard
+    - exhaustive
+    - exhaustruct
+    - forcetypeassert
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - godox
+    - goerr113
+    - gomnd
+    - gomoddirectives
+    - ireturn
+    - nlreturn
+    - nonamedreturns
+    - varnamelen
+    - wrapcheck
+    - wsl
+
+issues:
+  exclude-use-default: false
