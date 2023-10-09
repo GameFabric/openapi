@@ -49,11 +49,31 @@ func QueryParameterWithType(name, description, typ string) Parameter {
 	}
 }
 
+// HeaderParameter returns a header parameter with the given type.
+func HeaderParameter(name, description string) Parameter {
+	return Parameter{
+		in:          kin.ParameterInHeader,
+		name:        name,
+		description: description,
+	}
+}
+
 // Response documents a request response.
 type Response struct {
 	code        int
 	description string
 	writes      any
+	headers     []string
+}
+
+// ResponseOptFunc is an option function for configuration the response.
+type ResponseOptFunc func(*Response)
+
+// WithResponseHeader adds a header to the response.
+func WithResponseHeader(name string) ResponseOptFunc {
+	return func(resp *Response) {
+		resp.headers = append(resp.headers, name)
+	}
 }
 
 // Operation documents a request.
@@ -161,12 +181,18 @@ func (o *OpBuilder) Produces(mediaTypes ...string) *OpBuilder {
 }
 
 // Returns appends the given response to the operation.
-func (o *OpBuilder) Returns(code int, description string, obj any) *OpBuilder {
-	o.op.returns = append(o.op.returns, Response{
+func (o *OpBuilder) Returns(code int, description string, obj any, opts ...ResponseOptFunc) *OpBuilder {
+	resp := Response{
 		code:        code,
 		description: description,
 		writes:      obj,
-	})
+	}
+
+	for _, opt := range opts {
+		opt(&resp)
+	}
+
+	o.op.returns = append(o.op.returns, resp)
 	return o
 }
 

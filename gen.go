@@ -240,9 +240,22 @@ func (g *generator) toResponses(res []Response, mediaTypes []string) (kin.Respon
 			content[mime] = &kin.MediaType{Schema: schema}
 		}
 
+		headers := make(kin.Headers, len(r.headers))
+		for _, name := range r.headers {
+			headers[name] = &kin.HeaderRef{
+				Value: &kin.Header{
+					Parameter: kin.Parameter{
+						Name: name,
+						In:   kin.ParameterInHeader,
+					},
+				},
+			}
+		}
+
 		responses[strconv.Itoa(r.code)] = &kin.ResponseRef{Value: &kin.Response{
 			Description: &r.description,
 			Content:     content,
+			Headers:     headers,
 		}}
 	}
 	return responses, nil

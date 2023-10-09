@@ -56,6 +56,11 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "description": "the header authorization param",
+            "in": "header",
+            "name": "Authorization"
           }
         ],
         "requestBody": {
@@ -92,7 +97,13 @@
                 }
               }
             },
-            "description": "OK"
+            "description": "OK",
+            "headers": {
+              "X-Request-Id": {
+                "in": "header",
+                "name": "X-Request-Id"
+              }
+            }
           }
         },
         "summary": "test",

@@ -32,10 +32,11 @@ func TestBuildSpec(t *testing.T) {
 			Param(openapi.PathParameter("name", "the item name")).
 			Param(openapi.QueryParameter("filter", "the filter number", 123)).
 			Param(openapi.QueryParameterWithType("custom", "the customer param", "integer")).
+			Param(openapi.HeaderParameter("Authorization", "the header authorization param")).
 			Consumes("text/html", "text/plain").
 			Reads(&TestObject{}).
 			Produces("application/json", "application/xml").
-			Returns(http.StatusOK, "OK", &TestObject{})
+			Returns(http.StatusOK, "OK", &TestObject{}, openapi.WithResponseHeader("X-Request-Id"))
 
 		r.With(op.Build()).Post("/test/{name}", func(rw http.ResponseWriter, req *http.Request) {})
 	})
