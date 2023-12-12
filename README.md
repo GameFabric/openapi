@@ -46,6 +46,7 @@ type TestObject struct {
 	// B is another example field.
 	//
 	//openapi:required
+	//openapi:format=ipv4
 	B string
 }
 ```
@@ -71,12 +72,20 @@ func (TestObject) Attributes() map[string]string {
 		"B": "required",
 	}
 }
+
+// Formats returns a set of property formats per property.
+func (TestObject) Formats() map[string]string {
+	return map[string]string{
+		"B": "ipv4",
+	}
+}
 ```
 
 The following directives can be used on struct fields:
 
 * `openapi:required`: Marks the field as required.
 * `openapi:readonly`: Marks the field as read only.
+* `openapi:format=<FORMAT>`: Sets the format of the field, e.g. "date" or "ipv4". See [list of valid formats](https://spec.openapis.org/registry/format/).
 
 #### More Options
 
