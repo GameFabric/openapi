@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	genDirective      = "openapi:gen"
-	readonlyDirective = "openapi:readonly"
-	requiredDirective = "openapi:required"
+	directiveGen      = "openapi:gen"
+	directiveReadonly = "openapi:readonly"
+	directiveRequired = "openapi:required"
+	directiveFormat   = "openapi:format"
 )
 
 // Generator is a struct documentation generator. It gathers struct
@@ -72,9 +73,10 @@ type pkgInfo struct {
 }
 
 type structInfo struct {
-	Name  string
-	Docs  map[string]string
-	Props map[string]string
+	Name    string
+	Docs    map[string]string
+	Props   map[string]string
+	Formats map[string]string
 }
 
 //nolint:cyclop // Splitting this will not make it simpler.
@@ -119,17 +121,24 @@ func (g *Generator) gatherInfo(path string) (pkgInfo, error) {
 					continue
 				}
 
-				if !g.all && !hasDirective(genDirective, typSpec.Doc, genDecl.Doc) {
+				if !g.all && !hasDirective(directiveGen, typSpec.Doc, genDecl.Doc) {
 					continue
 				}
 
 				docs := g.gatherStructDocs(typSpec.Type.(*ast.StructType))
 				props := g.gatherStructProps(typSpec.Type.(*ast.StructType))
-				if len(docs) == 0 && len(props) == 0 {
+				formats := g.gatherStructFormats(typSpec.Type.(*ast.StructType))
+
+				if len(docs) == 0 && len(props) == 0 && len(formats) == 0 {
 					continue
 				}
 
-				pkg.Structs = append(pkg.Structs, structInfo{Name: typSpec.Name.String(), Docs: docs, Props: props})
+				pkg.Structs = append(pkg.Structs, structInfo{
+					Name:    typSpec.Name.String(),
+					Docs:    docs,
+					Props:   props,
+					Formats: formats,
+				})
 			}
 		}
 	}
@@ -171,18 +180,38 @@ func (g *Generator) gatherStructProps(typ *ast.StructType) map[string]string {
 		}
 
 		switch {
-		case hasDirective(readonlyDirective, field.Doc):
+		case hasDirective(directiveReadonly, field.Doc):
 			props[fldName] = "readonly"
-		case hasDirective(requiredDirective, field.Doc):
+		case hasDirective(directiveRequired, field.Doc):
 			props[fldName] = "required"
 		}
 	}
 	return props
 }
 
+func (g *Generator) gatherStructFormats(typ *ast.StructType) map[string]string {
+	formats := map[string]string{}
+	for _, field := range typ.Fields.List {
+		fldName := fieldName(field, g.tag)
+		if fldName == "" {
+			continue
+		}
+
+		if rest, found := cutDirective(directiveFormat+"=", field.Doc); found {
+			formats[fldName] = rest
+		}
+	}
+	return formats
+}
+
 func hasDirective(directive string, cgs ...*ast.CommentGroup) bool {
+	_, found := cutDirective(directive, cgs...)
+	return found
+}
+
+func cutDirective(directive string, cgs ...*ast.CommentGroup) (string, bool) {
 	if len(cgs) == 0 {
-		return false
+		return "", false
 	}
 
 	for _, cg := range cgs {
@@ -191,12 +220,12 @@ func hasDirective(directive string, cgs ...*ast.CommentGroup) bool {
 		}
 
 		for _, comment := range cg.List {
-			if strings.HasPrefix(comment.Text, "//"+directive) {
-				return true
+			if _, after, found := strings.Cut(comment.Text, "//"+directive); found {
+				return after, true
 			}
 		}
 	}
-	return false
+	return "", false
 }
 
 func fieldName(field *ast.Field, tag string) string {
@@ -245,6 +274,16 @@ func ({{ .Name }}) Docs() map[string]string {
 func ({{ .Name }}) Attributes() map[string]string {
   return map[string]string {
   {{- range $k, $v := .Props }}
+    "{{ $k }}": "{{ $v }}",
+  {{- end }}
+  }
+}
+{{ end }}
+{{- if .Formats }}
+// Formats returns a set of property formats per property.
+func ({{ .Name }}) Formats() map[string]string {
+  return map[string]string {
+  {{- range $k, $v := .Formats }}
     "{{ $k }}": "{{ $v }}",
   {{- end }}
   }

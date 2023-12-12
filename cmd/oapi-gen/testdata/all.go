@@ -21,6 +21,7 @@ func (TestObject) Attributes() map[string]string {
 func (TestOtherObject) Docs() map[string]string {
 	return map[string]string{
 		"D": "D is another example field.",
+		"E": "E is a formatted example field.",
 		"c": "C is an example field.",
 	}
 }
@@ -29,5 +30,12 @@ func (TestOtherObject) Docs() map[string]string {
 func (TestOtherObject) Attributes() map[string]string {
 	return map[string]string{
 		"D": "readonly",
+	}
+}
+
+// Formats returns a set of property formats per property.
+func (TestOtherObject) Formats() map[string]string {
+	return map[string]string{
+		"E": "ipv4",
 	}
 }

@@ -13,6 +13,10 @@
           },
           "test3": {
             "type": "string"
+          },
+          "test4": {
+            "format": "ipv4",
+            "type": "string"
           }
         },
         "required": [

@@ -21,4 +21,9 @@ type TestOtherObject struct {
 	//
 	//openapi:readonly
 	D string
+
+	// E is a formatted example field.
+	//
+	//openapi:format=ipv4
+	E string
 }

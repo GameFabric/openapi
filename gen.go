@@ -335,67 +335,102 @@ type attrable interface {
 	Attributes() map[string]string
 }
 
+type formatable interface {
+	Formats() map[string]string
+}
+
 func customizer(name string, t reflect.Type, _ reflect.StructTag, schema *kin.Schema) error {
 	v := reflect.New(t).Elem().Interface()
 
-	def, hasOpenAPIType := v.(openAPIType)
-	oneOf, hasOneOfTypes := v.(oneOfTypes)
-	docObj, hasDocs := v.(docable)
-	attrObj, hasAttrs := v.(attrable)
-
-	if hasOpenAPIType {
-		typs := def.OpenAPISchemaType()
-		if len(typs) == 0 {
-			return fmt.Errorf("type %q defines open api types by returns none", name)
-		}
-		schema.Type = typs[0]
-		schema.Format = def.OpenAPISchemaFormat()
-	}
-
-	if hasOneOfTypes {
-		typs := oneOf.OpenAPIV3OneOfTypes()
-		var refs kin.SchemaRefs
-		for _, typ := range typs {
-			refs = append(refs, &kin.SchemaRef{Value: &kin.Schema{Type: typ}})
-		}
-		schema.OneOf = refs
-	}
-
-	if hasDocs {
-		docs := docObj.Docs()
-		for k, prop := range schema.Properties {
-			doc, ok := docs[k]
-			if !ok {
-				continue
-			}
-			if prop.Value == nil {
-				continue
-			}
-
-			prop.Value.Description = doc
+	if obj, ok := v.(openAPIType); ok {
+		if err := applyType(name, schema, obj); err != nil {
+			return err
 		}
 	}
 
-	if hasAttrs {
-		attrs := attrObj.Attributes()
-		var required []string
-		for k, prop := range schema.Properties {
-			attr := attrs[k]
-			if prop.Value == nil {
-				continue
-			}
-
-			switch attr {
-			case "readonly":
-				prop.Value.ReadOnly = true
-			case "required":
-				required = append(required, k)
-			}
-		}
-		if len(required) > 0 {
-			sort.Strings(required)
-			schema.Required = required
-		}
+	if obj, ok := v.(oneOfTypes); ok {
+		applyOneOfTypes(schema, obj)
 	}
+
+	if obj, ok := v.(docable); ok {
+		applyDocs(schema, obj)
+	}
+
+	if obj, ok := v.(attrable); ok {
+		applyAttrs(schema, obj)
+	}
+
+	if obj, ok := v.(formatable); ok {
+		applyFormats(schema, obj)
+	}
+
 	return nil
+}
+
+func applyType(name string, schema *kin.Schema, obj openAPIType) error {
+	typs := obj.OpenAPISchemaType()
+	if len(typs) == 0 {
+		return fmt.Errorf("type %q defines open api types by returns none", name)
+	}
+	schema.Type = typs[0]
+	schema.Format = obj.OpenAPISchemaFormat()
+	return nil
+}
+
+func applyOneOfTypes(schema *kin.Schema, obj oneOfTypes) {
+	typs := obj.OpenAPIV3OneOfTypes()
+	var refs kin.SchemaRefs
+	for _, typ := range typs {
+		refs = append(refs, &kin.SchemaRef{Value: &kin.Schema{Type: typ}})
+	}
+	schema.OneOf = refs
+}
+
+func applyDocs(schema *kin.Schema, obj docable) {
+	docs := obj.Docs()
+	for k, prop := range schema.Properties {
+		doc, ok := docs[k]
+		if !ok {
+			continue
+		}
+		if prop.Value == nil {
+			continue
+		}
+
+		prop.Value.Description = doc
+	}
+}
+
+func applyAttrs(schema *kin.Schema, obj attrable) {
+	attrs := obj.Attributes()
+	var required []string
+	for k, prop := range schema.Properties {
+		attr := attrs[k]
+		if prop.Value == nil {
+			continue
+		}
+
+		switch attr {
+		case "readonly":
+			prop.Value.ReadOnly = true
+		case "required":
+			required = append(required, k)
+		}
+	}
+	if len(required) > 0 {
+		sort.Strings(required)
+		schema.Required = required
+	}
+}
+
+func applyFormats(schema *kin.Schema, obj formatable) {
+	fmts := obj.Formats()
+	for k, prop := range schema.Properties {
+		fmt := fmts[k]
+		if prop.Value == nil {
+			continue
+		}
+
+		prop.Value.WithFormat(fmt)
+	}
 }
