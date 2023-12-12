@@ -76,6 +76,7 @@ type generator struct {
 func newGenerator() *generator {
 	comp := kin.NewComponents()
 	comp.Schemas = kin.Schemas{}
+	comp.SecuritySchemes = kin.SecuritySchemes{}
 
 	return &generator{
 		doc: kin.T{
@@ -102,6 +103,11 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 		return fmt.Errorf("generating responses for %s %q: %w", method, path, err)
 	}
 
+	secReqs, err := g.addSecuritySchemes(op.security)
+	if err != nil {
+		return fmt.Errorf("generating security requirement for %s %q: %w", method, path, err)
+	}
+
 	g.doc.AddOperation(path, method, &kin.Operation{
 		Summary:     op.doc,
 		OperationID: op.id,
@@ -109,6 +115,7 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 		Parameters:  params,
 		RequestBody: reqBody,
 		Responses:   responses,
+		Security:    secReqs,
 	})
 	return nil
 }
@@ -259,6 +266,56 @@ func (g *generator) toResponses(res []Response, mediaTypes []string) (kin.Respon
 		}}
 	}
 	return responses, nil
+}
+
+// addSecuritySchemes derives a security scheme from the given Security struct and returns the security requirements,
+// which act as a reference from an endpoint to its security scheme.
+func (g *generator) addSecuritySchemes(secs map[string]Security) (*kin.SecurityRequirements, error) {
+	if len(secs) == 0 {
+		return nil, nil //nolint:nilnil
+	}
+
+	var reqs kin.SecurityRequirements
+	for name, sec := range secs {
+		switch sec.Type {
+		case secTypeBasic:
+			g.doc.Components.SecuritySchemes[name] = &kin.SecuritySchemeRef{
+				Value: &kin.SecurityScheme{
+					Type:   "http",
+					Scheme: "basic",
+				},
+			}
+			reqs = append(reqs, kin.SecurityRequirement{
+				name: []string{},
+			})
+		case secTypeBearer:
+			g.doc.Components.SecuritySchemes[name] = &kin.SecuritySchemeRef{
+				Value: &kin.SecurityScheme{
+					BearerFormat: sec.BearerFormat,
+					Type:         "http",
+					Scheme:       "bearer",
+				},
+			}
+			reqs = append(reqs, kin.SecurityRequirement{
+				name: []string{},
+			})
+		case secTypeAPIKey:
+			g.doc.Components.SecuritySchemes[name] = &kin.SecuritySchemeRef{
+				Value: &kin.SecurityScheme{
+					Type: "apiKey",
+					Name: sec.APIKeyName,
+					In:   sec.APIKeyIn,
+				},
+			}
+			reqs = append(reqs, kin.SecurityRequirement{
+				name: []string{},
+			})
+		default:
+			return nil, fmt.Errorf("unsupported security type %q", sec.Type)
+		}
+	}
+
+	return &reqs, nil
 }
 
 type openAPIType interface {

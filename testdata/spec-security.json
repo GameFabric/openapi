@@ -1,0 +1,146 @@
+{
+  "components": {
+    "securitySchemes": {
+      "myBasicAuth": {
+        "scheme": "basic",
+        "type": "http"
+      },
+      "myBearerAuth": {
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "myCookieAPIKey": {
+        "in": "cookie",
+        "name": "Foo",
+        "type": "apiKey"
+      },
+      "myHeaderAPIKey": {
+        "in": "header",
+        "name": "Foo",
+        "type": "apiKey"
+      },
+      "myJWTAuth": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "myQueryAPIKey": {
+        "in": "query",
+        "name": "foo",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "title": "Test Server",
+    "version": "1"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/apikey-cookie": {
+      "post": {
+        "operationId": "test-apikey-cookie",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "myCookieAPIKey": []
+          }
+        ]
+      }
+    },
+    "/api/apikey-header": {
+      "post": {
+        "operationId": "test-apikey-header",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "myHeaderAPIKey": []
+          }
+        ]
+      }
+    },
+    "/api/apikey-query": {
+      "post": {
+        "operationId": "test-apikey-query",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "myQueryAPIKey": []
+          }
+        ]
+      }
+    },
+    "/api/basic": {
+      "post": {
+        "operationId": "test-basic1",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "myBasicAuth": []
+          }
+        ]
+      }
+    },
+    "/api/basic-reuse": {
+      "post": {
+        "operationId": "test-basic2",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "myBasicAuth": []
+          }
+        ]
+      }
+    },
+    "/api/bearer": {
+      "post": {
+        "operationId": "test-bearer",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "myBearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/bearer-jwt": {
+      "post": {
+        "operationId": "test-jwt",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "myJWTAuth": []
+          }
+        ]
+      }
+    }
+  }
+}

@@ -65,6 +65,71 @@ func TestBuildSpec(t *testing.T) {
 	assert.Equal(t, string(want), string(got))
 }
 
+func TestBuildSpecSecurity(t *testing.T) {
+	mux := chi.NewMux()
+
+	mux.Use(openapi.Op().Build())
+
+	mux.Route("/api", func(r chi.Router) {
+		testOp := func(id string) *openapi.OpBuilder {
+			return openapi.Op().
+				ID(id).
+				Produces("application/json", "application/xml").
+				Returns(http.StatusNoContent, http.StatusText(http.StatusNoContent), nil)
+		}
+
+		// Basic:
+		r.With(testOp("test-basic1").RequiresAuth("myBasicAuth", openapi.SecurityBasic).Build()).Post("/basic", func(rw http.ResponseWriter, req *http.Request) {})
+		r.With(testOp("test-basic2").RequiresAuth("myBasicAuth", openapi.SecurityBasic).Build()).Post("/basic-reuse", func(rw http.ResponseWriter, req *http.Request) {})
+
+		// Bearer:
+		r.With(testOp("test-bearer").RequiresAuth("myBearerAuth", openapi.SecurityBearer).Build()).Post("/bearer", func(rw http.ResponseWriter, req *http.Request) {})
+		r.With(testOp("test-jwt").RequiresAuth("myJWTAuth", openapi.Security{
+			Type:         "bearer",
+			BearerFormat: "JWT",
+		}).Build()).Post("/bearer-jwt", func(rw http.ResponseWriter, req *http.Request) {})
+
+		// APIKey:
+		r.With(testOp("test-apikey-header").RequiresAuth("myHeaderAPIKey", openapi.Security{
+			Type:       "apiKey",
+			APIKeyName: "Foo",
+			APIKeyIn:   "header",
+		}).Build()).Post("/apikey-header", func(rw http.ResponseWriter, req *http.Request) {})
+
+		r.With(testOp("test-apikey-cookie").RequiresAuth("myCookieAPIKey", openapi.Security{
+			Type:       "apiKey",
+			APIKeyName: "Foo",
+			APIKeyIn:   "cookie",
+		}).Build()).Post("/apikey-cookie", func(rw http.ResponseWriter, req *http.Request) {})
+
+		r.With(testOp("test-apikey-query").RequiresAuth("myQueryAPIKey", openapi.Security{
+			Type:       "apiKey",
+			APIKeyName: "foo",
+			APIKeyIn:   "query",
+		}).Build()).Post("/apikey-query", func(rw http.ResponseWriter, req *http.Request) {})
+	})
+
+	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
+		ObjPkgSegments: 1,
+	})
+	require.NoError(t, err)
+
+	doc.OpenAPI = "3.0.0"
+	doc.Info = &kin.Info{
+		Title:   "Test Server",
+		Version: "1",
+	}
+	got, err := json.MarshalIndent(doc, "", "  ")
+	require.NoError(t, err)
+	if *update {
+		_ = os.WriteFile("testdata/spec-security.json", got, 0o644)
+	}
+
+	want, err := os.ReadFile("testdata/spec-security.json")
+	require.NoError(t, err)
+	assert.Equal(t, string(want), string(got))
+}
+
 func testHandler() http.HandlerFunc {
 	type options struct {
 		PageSize int    `schema:"page_size"`
