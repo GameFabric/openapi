@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"html/template"
 	"io/fs"
+	"slices"
 	"sort"
 	"strings"
 
@@ -17,10 +18,10 @@ import (
 )
 
 const (
-	directiveGen      = "openapi:gen"
-	directiveReadonly = "openapi:readonly"
-	directiveRequired = "openapi:required"
-	directiveFormat   = "openapi:format"
+	directiveGen      = "gen"
+	directiveReadonly = "readonly"
+	directiveRequired = "required"
+	directiveFormat   = "format"
 )
 
 // Generator is a struct documentation generator. It gathers struct
@@ -75,11 +76,15 @@ type pkgInfo struct {
 type structInfo struct {
 	Name    string
 	Docs    map[string]string
-	Props   map[string]string
+	Attrs   map[string]string
 	Formats map[string]string
 }
 
-//nolint:cyclop // Splitting this will not make it simpler.
+func (i structInfo) Empty() bool {
+	return len(i.Docs) == 0 && len(i.Attrs) == 0 && len(i.Formats) == 0
+}
+
+//nolint:cyclop,gocognit // Splitting this will not make it simpler.
 func (g *Generator) gatherInfo(path string) (pkgInfo, error) {
 	fset := token.NewFileSet()
 	d, err := parser.ParseDir(fset, path, func(info fs.FileInfo) bool {
@@ -125,20 +130,14 @@ func (g *Generator) gatherInfo(path string) (pkgInfo, error) {
 					continue
 				}
 
-				docs := g.gatherStructDocs(typSpec.Type.(*ast.StructType))
-				props := g.gatherStructProps(typSpec.Type.(*ast.StructType))
-				formats := g.gatherStructFormats(typSpec.Type.(*ast.StructType))
-
-				if len(docs) == 0 && len(props) == 0 && len(formats) == 0 {
+				info, err := g.gatherStructInfo(typSpec.Name.String(), typSpec.Type.(*ast.StructType))
+				if err != nil {
+					return pkgInfo{}, err
+				}
+				if info.Empty() {
 					continue
 				}
-
-				pkg.Structs = append(pkg.Structs, structInfo{
-					Name:    typSpec.Name.String(),
-					Docs:    docs,
-					Props:   props,
-					Formats: formats,
-				})
+				pkg.Structs = append(pkg.Structs, info)
 			}
 		}
 	}
@@ -150,82 +149,78 @@ func (g *Generator) gatherInfo(path string) (pkgInfo, error) {
 	return pkg, nil
 }
 
-func (g *Generator) gatherStructDocs(typ *ast.StructType) map[string]string {
-	docs := map[string]string{}
+func (g *Generator) gatherStructInfo(name string, typ *ast.StructType) (structInfo, error) {
+	info := structInfo{
+		Name:    name,
+		Docs:    map[string]string{},
+		Attrs:   map[string]string{},
+		Formats: map[string]string{},
+	}
 	for _, field := range typ.Fields.List {
+		if field.Doc == nil {
+			continue
+		}
+
 		fldName := fieldName(field, g.tag)
 		if fldName == "" {
 			continue
 		}
 
-		var comment string
-		if field.Doc != nil {
-			comment = docToString(field.Doc)
-		}
-		if comment == "" {
-			continue
+		if docs := docToString(field.Doc); docs != "" {
+			info.Docs[fldName] = docs
 		}
 
-		docs[fldName] = comment
-	}
-	return docs
-}
-
-func (g *Generator) gatherStructProps(typ *ast.StructType) map[string]string {
-	props := map[string]string{}
-	for _, field := range typ.Fields.List {
-		fldName := fieldName(field, g.tag)
-		if fldName == "" {
-			continue
-		}
-
-		switch {
-		case hasDirective(directiveReadonly, field.Doc):
-			props[fldName] = "readonly"
-		case hasDirective(directiveRequired, field.Doc):
-			props[fldName] = "required"
+		ds := directives(field.Doc)
+		for _, d := range ds {
+			switch {
+			case d == directiveReadonly:
+				info.Attrs[fldName] = "readonly"
+			case d == directiveRequired && info.Attrs[fldName] == "":
+				info.Attrs[fldName] = "required"
+			case strings.HasPrefix(d, directiveFormat):
+				_, val, found := strings.Cut(d, "=")
+				if !found {
+					return info, fmt.Errorf("format directive should be in format openapi:format=<format>, got %s", d)
+				}
+				info.Formats[fldName] = val
+			}
 		}
 	}
-	return props
+	return info, nil
 }
 
-func (g *Generator) gatherStructFormats(typ *ast.StructType) map[string]string {
-	formats := map[string]string{}
-	for _, field := range typ.Fields.List {
-		fldName := fieldName(field, g.tag)
-		if fldName == "" {
-			continue
-		}
+func directives(cgs ...*ast.CommentGroup) []string {
+	const prefix = "//openapi:"
 
-		if rest, found := cutDirective(directiveFormat+"=", field.Doc); found {
-			formats[fldName] = rest
-		}
-	}
-	return formats
-}
-
-func hasDirective(directive string, cgs ...*ast.CommentGroup) bool {
-	_, found := cutDirective(directive, cgs...)
-	return found
-}
-
-func cutDirective(directive string, cgs ...*ast.CommentGroup) (string, bool) {
 	if len(cgs) == 0 {
-		return "", false
+		return nil
 	}
 
+	var found []string
 	for _, cg := range cgs {
 		if cg == nil {
 			continue
 		}
 
 		for _, comment := range cg.List {
-			if _, after, found := strings.Cut(comment.Text, "//"+directive); found {
-				return after, true
+			if strings.HasPrefix(comment.Text, prefix) {
+				s := strings.TrimPrefix(comment.Text, prefix)
+
+				// A directive should not contain spaces, ignore everything after the space.
+				s, _, _ = strings.Cut(s, " ")
+				if s == "" {
+					continue
+				}
+
+				found = append(found, s)
 			}
 		}
 	}
-	return "", false
+	return found
+}
+
+func hasDirective(directive string, cgs ...*ast.CommentGroup) bool {
+	return slices.Contains(directives(cgs...), directive)
 }
 
 func fieldName(field *ast.Field, tag string) string {
@@ -269,11 +264,11 @@ func ({{ .Name }}) Docs() map[string]string {
   }
 }
 {{ end }}
-{{- if .Props }}
+{{- if .Attrs }}
 // Attributes returns a set of property attributes per property.
 func ({{ .Name }}) Attributes() map[string]string {
   return map[string]string {
-  {{- range $k, $v := .Props }}
+  {{- range $k, $v := .Attrs }}
     "{{ $k }}": "{{ $v }}",
   {{- end }}
   }

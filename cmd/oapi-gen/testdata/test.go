@@ -9,7 +9,7 @@ type TestObject struct {
 
 	// B is another example field.
 	//
-	//openapi:required
+	//openapi:required // This should be ignored
 	B string
 }
 
@@ -19,11 +19,11 @@ type TestOtherObject struct {
 
 	// D is another example field.
 	//
-	//openapi:readonly
+	//openapi:readonly // This should be ignored
 	D string
 
 	// E is a formatted example field.
 	//
-	//openapi:format=ipv4
+	//openapi:format=ipv4 // This should be ignored
 	E string
 }
