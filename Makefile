@@ -14,7 +14,7 @@ tidy:
 
 # Build the commands
 build:
-	@find ./cmd/* -maxdepth 1 -type d -exec go build {} \;
+	@find ./cmd/* -maxdepth 1 -not -path "./cmd/oapi-gen/testdata" -type d -exec go build {} \;
 .PHONY: build
 
 # Run all tests
