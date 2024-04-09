@@ -178,7 +178,7 @@ func (g *generator) toParams(params []Parameter) (kin.Parameters, error) {
 		case param.typ != "":
 			schema = &kin.SchemaRef{
 				Value: &kin.Schema{
-					Type: param.typ,
+					Type: &kin.Types{param.typ},
 				},
 			}
 		case param.dataType != nil:
@@ -221,19 +221,17 @@ func (g *generator) toRequestBody(obj any, mediaTypes []string) (*kin.RequestBod
 	}}, nil
 }
 
-func (g *generator) toResponses(res []Response, mediaTypes []string) (kin.Responses, error) {
+func (g *generator) toResponses(res []Response, mediaTypes []string) (*kin.Responses, error) {
 	if len(res) == 0 || len(mediaTypes) == 0 {
 		return nil, nil
 	}
 
-	responses := kin.Responses{}
+	responses := &kin.Responses{}
 	for _, r := range res {
-		r := r
-
 		if r.writes == nil {
-			responses[strconv.Itoa(r.code)] = &kin.ResponseRef{Value: &kin.Response{
+			responses.Set(strconv.Itoa(r.code), &kin.ResponseRef{Value: &kin.Response{
 				Description: &r.description,
-			}}
+			}})
 			continue
 		}
 
@@ -259,11 +257,11 @@ func (g *generator) toResponses(res []Response, mediaTypes []string) (kin.Respon
 			}
 		}
 
-		responses[strconv.Itoa(r.code)] = &kin.ResponseRef{Value: &kin.Response{
+		responses.Set(strconv.Itoa(r.code), &kin.ResponseRef{Value: &kin.Response{
 			Description: &r.description,
 			Content:     content,
 			Headers:     headers,
-		}}
+		}})
 	}
 	return responses, nil
 }
@@ -372,7 +370,7 @@ func applyType(name string, schema *kin.Schema, obj openAPIType) error {
 	if len(typs) == 0 {
 		return fmt.Errorf("type %q defines open api types by returns none", name)
 	}
-	schema.Type = typs[0]
+	schema.Type = &kin.Types{typs[0]}
 	schema.Format = obj.OpenAPISchemaFormat()
 	return nil
 }
@@ -381,7 +379,7 @@ func applyOneOfTypes(schema *kin.Schema, obj oneOfTypes) {
 	typs := obj.OpenAPIV3OneOfTypes()
 	var refs kin.SchemaRefs
 	for _, typ := range typs {
-		refs = append(refs, &kin.SchemaRef{Value: &kin.Schema{Type: typ}})
+		refs = append(refs, &kin.SchemaRef{Value: &kin.Schema{Type: &kin.Types{typ}}})
 	}
 	schema.OneOf = refs
 }

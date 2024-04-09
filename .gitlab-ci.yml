@@ -23,7 +23,7 @@ default:
 
 lint:go:
   stage: lint
-  image: golangci/golangci-lint:v1.54.2-alpine
+  image: golangci/golangci-lint:v1.57.2-alpine
   cache:
     - key: "go-lint-cache"
       paths:
@@ -46,7 +46,7 @@ lint:go:
 
 test:go:
   stage: test
-  image: golang:1.21-bullseye
+  image: golang:1.22-bookworm
   needs:
     - lint:go
   cache:

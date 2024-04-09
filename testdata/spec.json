@@ -1,4 +1,5 @@
 {
+  "openapi": "3.0.0",
   "components": {
     "schemas": {
       "openapi_test.TestObject": {
@@ -30,7 +31,6 @@
     "title": "Test Server",
     "version": "1"
   },
-  "openapi": "3.0.0",
   "paths": {
     "/api/test/{name}": {
       "post": {

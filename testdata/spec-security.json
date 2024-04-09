@@ -1,4 +1,5 @@
 {
+  "openapi": "3.0.0",
   "components": {
     "securitySchemes": {
       "myBasicAuth": {
@@ -35,7 +36,6 @@
     "title": "Test Server",
     "version": "1"
   },
-  "openapi": "3.0.0",
   "paths": {
     "/api/apikey-cookie": {
       "post": {

@@ -10,6 +10,9 @@ linters-settings:
     line-length: 130
   gofumpt:
     extra-rules: true
+  gosec:
+    excludes:
+      - G601
 
 linters:
   enable-all: true
@@ -36,8 +39,10 @@ linters:
     - goerr113
     - gomnd
     - gomoddirectives
+    - intrange
     - ireturn
     - nlreturn
+    - nilnil
     - nonamedreturns
     - varnamelen
     - wrapcheck
