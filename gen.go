@@ -222,7 +222,7 @@ func (g *generator) toRequestBody(obj any, mediaTypes []string) (*kin.RequestBod
 }
 
 func (g *generator) toResponses(res []Response, mediaTypes []string) (*kin.Responses, error) {
-	if len(res) == 0 || len(mediaTypes) == 0 {
+	if len(res) == 0 {
 		return nil, nil
 	}
 
@@ -240,8 +240,13 @@ func (g *generator) toResponses(res []Response, mediaTypes []string) (*kin.Respo
 			return nil, err
 		}
 
+		useMediaTypes := mediaTypes
+		if len(r.mediaTypes) > 0 {
+			useMediaTypes = r.mediaTypes
+		}
+
 		content := kin.Content{}
-		for _, mime := range mediaTypes {
+		for _, mime := range useMediaTypes {
 			content[mime] = &kin.MediaType{Schema: schema}
 		}
 

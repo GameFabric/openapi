@@ -36,7 +36,8 @@ func TestBuildSpec(t *testing.T) {
 			Consumes("text/html", "text/plain").
 			Reads(&TestObject{}).
 			Produces("application/json", "application/xml").
-			Returns(http.StatusOK, "OK", &TestObject{}, openapi.WithResponseHeader("X-Request-Id"))
+			Returns(http.StatusOK, "OK", &TestObject{}, openapi.WithResponseHeader("X-Request-Id")).
+			Returns(http.StatusConflict, "Conflict", "", openapi.WithMediaTypes("application/octet-steam"))
 
 		r.With(op.Build()).Post("/test/{name}", func(rw http.ResponseWriter, req *http.Request) {})
 	})

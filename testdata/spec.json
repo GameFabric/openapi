@@ -108,6 +108,16 @@
                 "name": "X-Request-Id"
               }
             }
+          },
+          "409": {
+            "content": {
+              "application/octet-steam": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Conflict"
           }
         },
         "summary": "test",

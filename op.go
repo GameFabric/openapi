@@ -64,6 +64,7 @@ type Response struct {
 	description string
 	writes      any
 	headers     []string
+	mediaTypes  []string
 }
 
 // ResponseOptFunc is an option function for configuration the response.
@@ -73,6 +74,13 @@ type ResponseOptFunc func(*Response)
 func WithResponseHeader(name string) ResponseOptFunc {
 	return func(resp *Response) {
 		resp.headers = append(resp.headers, name)
+	}
+}
+
+// WithMediaTypes sets the specific media types for this response.
+func WithMediaTypes(mediaTypes ...string) ResponseOptFunc {
+	return func(resp *Response) {
+		resp.mediaTypes = mediaTypes
 	}
 }
 
