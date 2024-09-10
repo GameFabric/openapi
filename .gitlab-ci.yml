@@ -1,6 +1,7 @@
 ---
 include:
-  - component: "gitlab.com/nitrado/b2b/ci/components/go/lint-test@v0.6"
+  - component: "gitlab.com/nitrado/b2b/ci/components/utils/git@v1"
+  - component: "gitlab.com/nitrado/b2b/ci/components/go/lint-test@v0"
 
 default:
   tags:
