@@ -1,0 +1,206 @@
+{
+  "openapi": "3.0.0",
+  "components": {
+    "schemas": {
+      "TestGenericObject[TestSimpleObject]": {
+        "properties": {
+          "test1": {
+            "properties": {
+              "test1": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "test2": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestObject": {
+        "properties": {
+          "test1": {
+            "description": "Some test docs",
+            "type": "string"
+          },
+          "test2": {
+            "readOnly": true,
+            "type": "string"
+          },
+          "test3": {
+            "type": "string"
+          },
+          "test4": {
+            "format": "ipv4",
+            "type": "string"
+          }
+        },
+        "required": [
+          "test3"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Test Server",
+    "version": "1"
+  },
+  "paths": {
+    "/api/test/{name}": {
+      "post": {
+        "operationId": "test-id",
+        "parameters": [
+          {
+            "description": "the item name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "the filter number",
+            "in": "query",
+            "name": "filter",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "the customer param",
+            "in": "query",
+            "name": "custom",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "the header authorization param",
+            "in": "header",
+            "name": "Authorization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestObject"
+              }
+            },
+            "text/html": {
+              "schema": {
+                "$ref": "#/components/schemas/TestObject"
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "$ref": "#/components/schemas/TestObject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestObject"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestObject"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "X-Request-Id": {
+                "in": "header",
+                "name": "X-Request-Id"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestGenericObject[TestSimpleObject]"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestGenericObject[TestSimpleObject]"
+                }
+              }
+            },
+            "description": "Missing"
+          },
+          "409": {
+            "content": {
+              "application/octet-steam": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "test",
+        "tags": [
+          "test-tag"
+        ]
+      }
+    },
+    "/handler": {
+      "get": {
+        "operationId": "test-handler",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "test": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "204": {
+            "description": "OK"
+          }
+        },
+        "summary": "test handler",
+        "tags": [
+          "handler"
+        ]
+      }
+    }
+  }
+}

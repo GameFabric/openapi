@@ -5,6 +5,7 @@ import (
 	"flag"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 
 	kin "github.com/getkin/kin-openapi/openapi3"
@@ -45,26 +46,38 @@ func TestBuildSpec(t *testing.T) {
 
 	mux.Get("/internal/handler", testHandler())
 
-	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
-		StripPrefixes:  []string{"/internal"},
-		ObjPkgSegments: 1,
-	})
-	require.NoError(t, err)
+	for i := range 2 {
+		t.Run("pkg segments "+strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
 
-	doc.OpenAPI = "3.0.0"
-	doc.Info = &kin.Info{
-		Title:   "Test Server",
-		Version: "1",
-	}
-	got, err := json.MarshalIndent(doc, "", "  ")
-	require.NoError(t, err)
-	if *update {
-		_ = os.WriteFile("testdata/spec.json", got, 0o644)
-	}
+			doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
+				StripPrefixes:  []string{"/internal"},
+				ObjPkgSegments: i,
+			})
+			require.NoError(t, err)
 
-	want, err := os.ReadFile("testdata/spec.json")
-	require.NoError(t, err)
-	assert.Equal(t, string(want), string(got))
+			doc.OpenAPI = "3.0.0"
+			doc.Info = &kin.Info{
+				Title:   "Test Server",
+				Version: "1",
+			}
+			got, err := json.MarshalIndent(doc, "", "  ")
+			require.NoError(t, err)
+
+			name := "testdata/spec.json"
+			if i != 1 {
+				name = "testdata/spec-pkgseg" + strconv.Itoa(i) + ".json"
+			}
+
+			if *update {
+				_ = os.WriteFile(name, got, 0o644)
+			}
+
+			want, err := os.ReadFile(name)
+			require.NoError(t, err)
+			assert.Equal(t, string(want), string(got))
+		})
+	}
 }
 
 func TestBuildSpecSecurity(t *testing.T) {
