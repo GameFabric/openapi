@@ -2,6 +2,22 @@
   "openapi": "3.0.0",
   "components": {
     "schemas": {
+      "openapi_test.TestGenericObject[openapi_test.TestSimpleObject]": {
+        "properties": {
+          "test1": {
+            "properties": {
+              "test1": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "test2": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "openapi_test.TestObject": {
         "properties": {
           "test1": {
@@ -108,6 +124,21 @@
                 "name": "X-Request-Id"
               }
             }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openapi_test.TestGenericObject[openapi_test.TestSimpleObject]"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/openapi_test.TestGenericObject[openapi_test.TestSimpleObject]"
+                }
+              }
+            },
+            "description": "Missing"
           },
           "409": {
             "content": {

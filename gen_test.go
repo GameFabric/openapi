@@ -37,6 +37,7 @@ func TestBuildSpec(t *testing.T) {
 			Reads(&TestObject{}).
 			Produces("application/json", "application/xml").
 			Returns(http.StatusOK, "OK", &TestObject{}, openapi.WithResponseHeader("X-Request-Id")).
+			Returns(http.StatusNotFound, "Missing", &TestGenericObject[TestSimpleObject]{}).
 			Returns(http.StatusConflict, "Conflict", "", openapi.WithMediaTypes("application/octet-steam"))
 
 		r.With(op.Build()).Post("/test/{name}", func(rw http.ResponseWriter, req *http.Request) {})
@@ -150,6 +151,15 @@ func testHandler() http.HandlerFunc {
 		BuildHandler()
 
 	return docs(func(rw http.ResponseWriter, req *http.Request) {})
+}
+
+type TestGenericObject[T TestSimpleObject] struct {
+	Test1 T      `json:"test1"`
+	Test2 string `json:"test2"`
+}
+
+type TestSimpleObject struct {
+	Test1 string `json:"test1"`
 }
 
 type TestObject struct {

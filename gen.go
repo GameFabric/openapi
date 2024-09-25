@@ -120,7 +120,7 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 	return nil
 }
 
-func (g *generator) schema(obj any) (*kin.SchemaRef, error) {
+func (g *generator) schema(obj any) (*kin.SchemaRef, error) { //nolint:cyclop // Readability.
 	t := reflect.TypeOf(obj)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
@@ -130,6 +130,22 @@ func (g *generator) schema(obj any) (*kin.SchemaRef, error) {
 	}
 
 	name := t.Name()
+	if from, to := strings.Index(name, "["), strings.LastIndex(name, "]"); from != -1 && from < to {
+		// name: "Object[github.com/org/repo/pkg.struct]".
+		parts := strings.Split(name[from+1:to], "/")
+		if l := len(parts); l > g.objPkgSegments {
+			parts = parts[l-g.objPkgSegments:]
+		}
+
+		switch {
+		case len(parts) == 0 || g.objPkgSegments == 0:
+			// "Object".
+			name = name[:from]
+		default:
+			// "Object[struct.pkg.repo.org.github.com]".
+			name = name[:from] + "[" + strings.Join(parts, ".") + "]"
+		}
+	}
 	if path := t.PkgPath(); path != "" && g.objPkgSegments > 0 {
 		parts := strings.Split(path, "/")
 		if l := len(parts); l > g.objPkgSegments {
