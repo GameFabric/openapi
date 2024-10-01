@@ -1,0 +1,108 @@
+name: Go Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ "1.23" ]
+    env:
+      GOLANGCI_LINT_VERSION: v1.61.0
+
+    steps:
+      - name: Install Go
+        if: success()
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+
+      - name: Run tests
+        run: go run gotest.tools/gotestsum@latest --junitfile tests.xml --format pkgname -- -cover -race ./...
+
+      - name: Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: "tests.xml"
+        if: always()
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - darwin
+          - linux
+          - windows
+        arch:
+          - 386
+          - amd64
+          - arm
+          - arm64
+          - ppc64le
+          - s390x
+        include:
+          - os: linux
+            arch: arm
+            arm: 7
+        exclude:
+          - os: darwin
+            arch: 386
+          - os: darwin
+            arch: arm
+          - os: darwin
+            arch: ppc64le
+          - os: darwin
+            arch: s390x
+          - os: windows
+            arch: arm
+          - os: windows
+            arch: arm64
+          - os: windows
+            arch: ppc64le
+          - os: windows
+            arch: s390x
+    env:
+      GO_VERSION: "1.23"
+
+    steps:
+      - name: Install Go
+        if: success()
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build oapi-gen
+        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} GOARM=${{ matrix.arm }} go build ./cmd/oapi-gen

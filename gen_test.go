@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/gamefabric/openapi"
 	kin "github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/nitrado/b2b/go/openapi"
 )
 
 var update = flag.Bool("update", false, "update the golden files of this test")
