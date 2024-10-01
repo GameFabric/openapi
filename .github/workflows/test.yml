@@ -1,10 +1,11 @@
+name: Go Test
+
 on:
   push:
     branches:
       - main
   pull_request:
 
-name: run tests
 jobs:
   test:
     runs-on: ubuntu-latest
