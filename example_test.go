@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gamefabric/openapi"
 	kin "github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
-	"gitlab.com/nitrado/b2b/go/openapi"
 )
 
 func Example() {

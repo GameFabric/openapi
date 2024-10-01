@@ -1,4 +1,4 @@
-module gitlab.com/nitrado/b2b/go/openapi
+module github.com/gamefabric/openapi
 
 go 1.23.0
 

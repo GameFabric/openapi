@@ -14,7 +14,7 @@ Any struct with the directive `openapi:gen` will have a documentation function g
 #### Install
 
 ```shell
-$ go install gitlab.com/nitrado/b2b/go/openapi/cmd/oapi-gen@<version>
+$ go install github.com/gamefabric/openapi/cmd/oapi-gen@<version>
 ```
 
 A simple way to keep the generation up-to-date is to use Go's generation framework on each package that needs documentation functions.
