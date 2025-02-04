@@ -11,6 +11,9 @@ type TestObject struct {
 	//
 	//openapi:required // This should be ignored
 	B string
+
+	// C should not appear
+	C string `json:"-"`
 }
 
 type TestOtherObject struct {

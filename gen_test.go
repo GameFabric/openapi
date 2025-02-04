@@ -172,7 +172,8 @@ type TestGenericObject[T TestSimpleObject] struct {
 }
 
 type TestSimpleObject struct {
-	Test1 string `json:"test1"`
+	Test1  string `json:"test1"`
+	Ignore string `json:"-"`
 }
 
 type TestObject struct {
