@@ -19,6 +19,11 @@
         "type": "object"
       },
       "TestObject": {
+        "example": {
+          "test1": "a",
+          "test2": "b",
+          "test3": "c"
+        },
         "properties": {
           "test1": {
             "description": "Some test docs",

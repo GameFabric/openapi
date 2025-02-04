@@ -179,7 +179,7 @@ type TestObject struct {
 	Test1 string `json:"test1"`
 	Test2 string `json:"test2"`
 	Test3 string `json:"test3"`
-	Test4 string `json:"test4"`
+	Test4 string `json:"test4,omitempty"`
 }
 
 func (TestObject) Docs() map[string]string {
@@ -192,6 +192,14 @@ func (TestObject) Attributes() map[string]string {
 	return map[string]string{
 		"test2": "readonly",
 		"test3": "required",
+	}
+}
+
+func (TestObject) Example() any {
+	return TestObject{
+		Test1: "a",
+		Test2: "b",
+		Test3: "c",
 	}
 }
 

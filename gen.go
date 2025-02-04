@@ -351,6 +351,10 @@ type docable interface {
 	Docs() map[string]string
 }
 
+type exemplar interface {
+	Example() any
+}
+
 type attrable interface {
 	Attributes() map[string]string
 }
@@ -374,6 +378,10 @@ func customizer(name string, t reflect.Type, _ reflect.StructTag, schema *kin.Sc
 
 	if obj, ok := v.(docable); ok {
 		applyDocs(schema, obj)
+	}
+
+	if obj, ok := v.(exemplar); ok {
+		applyExemplar(schema, obj)
 	}
 
 	if obj, ok := v.(attrable); ok {
@@ -419,6 +427,14 @@ func applyDocs(schema *kin.Schema, obj docable) {
 
 		prop.Value.Description = doc
 	}
+}
+
+func applyExemplar(schema *kin.Schema, obj exemplar) {
+	example := obj.Example()
+	if example == nil {
+		return
+	}
+	schema.Example = example
 }
 
 func applyAttrs(schema *kin.Schema, obj attrable) {
