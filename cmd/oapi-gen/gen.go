@@ -161,8 +161,8 @@ func (g *Generator) gatherStructInfo(name string, typ *ast.StructType) (structIn
 			continue
 		}
 
-		fldName := fieldName(field, g.tag)
-		if fldName == "" {
+		fldName, ok := fieldName(field, g.tag)
+		if !ok {
 			continue
 		}
 
@@ -223,7 +223,7 @@ func hasDirective(directive string, cgs ...*ast.CommentGroup) bool {
 	return slices.Contains(directives(cgs...), directive)
 }
 
-func fieldName(field *ast.Field, tag string) string {
+func fieldName(field *ast.Field, tag string) (string, bool) {
 	var fldName string
 	if len(field.Names) > 0 {
 		fldName = field.Names[0].String()
@@ -231,13 +231,17 @@ func fieldName(field *ast.Field, tag string) string {
 	if field.Tag != nil {
 		tags, err := structtag.Parse(strings.Trim(field.Tag.Value, "`"))
 		if err != nil {
-			return ""
+			return "", false
 		}
 		if tag, _ := tags.Get(tag); tag != nil && tag.Name != "" {
+			if tag.Name == "-" {
+				// Skip the tag.
+				return "", false
+			}
 			fldName = tag.Name
 		}
 	}
-	return fldName
+	return fldName, true
 }
 
 func docToString(cg *ast.CommentGroup) string {
