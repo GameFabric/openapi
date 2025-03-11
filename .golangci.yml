@@ -17,10 +17,8 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - execinquery # deprecated
-    - exportloopref # deprecated
     - gocyclo # duplicate of cyclop
-    - gomnd # deprecated
+    - tenv # deprecated
     - depguard
     - err113
     - exhaustive
