@@ -4,7 +4,8 @@ package testdata
 //
 //openapi:gen
 type TestObject struct {
-	// A is an example field with "quotes".
+	// A is an example field with "quotes"
+	// and a newline.
 	A string `json:"a"`
 
 	// B is another example field.

@@ -6,7 +6,7 @@ package testdata
 func (TestObject) Docs() map[string]string {
 	return map[string]string{
 		"B": "B is another example field.",
-		"a": "A is an example field with &#34;quotes&#34;.",
+		"a": "A is an example field with &#34;quotes&#34;\nand a newline.",
 	}
 }
 
