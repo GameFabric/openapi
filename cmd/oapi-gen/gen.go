@@ -264,7 +264,8 @@ func docToString(cg *ast.CommentGroup) string {
 		return ""
 	}
 
-	s = strings.Join(strings.Split(s, "\n"), " ")
+	s = strings.TrimSuffix(s, "\n")
+	s = strings.Join(strings.Split(s, "\n"), "\\n") // Escape newlines.
 	return strings.TrimSpace(s)
 }
 

@@ -26,7 +26,7 @@
         },
         "properties": {
           "test1": {
-            "description": "Some test docs",
+            "description": "Test1 is an documented field with \u0026#34;quotes\u0026#34;\nand a newline.",
             "type": "string"
           },
           "test2": {
