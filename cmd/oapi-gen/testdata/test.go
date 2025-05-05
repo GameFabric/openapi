@@ -29,4 +29,9 @@ type TestOtherObject struct {
 	//
 	//openapi:format=ipv4 // This should be ignored
 	E string
+
+	// F is a field that uses enum values.
+	//
+	//openapi:enum=foo,bar // This should be ignored
+	F string
 }

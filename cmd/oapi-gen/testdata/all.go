@@ -22,6 +22,7 @@ func (TestOtherObject) Docs() map[string]string {
 	return map[string]string{
 		"D": "D is another example field.",
 		"E": "E is a formatted example field.",
+		"F": "F is a field that uses enum values.",
 		"c": "C is an example field.",
 	}
 }
@@ -37,5 +38,12 @@ func (TestOtherObject) Attributes() map[string]string {
 func (TestOtherObject) Formats() map[string]string {
 	return map[string]string{
 		"E": "ipv4",
+	}
+}
+
+// Enums returns a set of possible enum values per property.
+func (TestOtherObject) Enums() map[string][]string {
+	return map[string][]string{
+		"F": {"foo", "bar"},
 	}
 }

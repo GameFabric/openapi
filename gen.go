@@ -363,6 +363,10 @@ type formatable interface {
 	Formats() map[string]string
 }
 
+type enumerable interface {
+	Enums() map[string][]string
+}
+
 func customizer(name string, t reflect.Type, _ reflect.StructTag, schema *kin.Schema) error {
 	v := reflect.New(t).Elem().Interface()
 
@@ -390,6 +394,10 @@ func customizer(name string, t reflect.Type, _ reflect.StructTag, schema *kin.Sc
 
 	if obj, ok := v.(formatable); ok {
 		applyFormats(schema, obj)
+	}
+
+	if obj, ok := v.(enumerable); ok {
+		applyEnums(schema, obj)
 	}
 
 	return nil
@@ -468,5 +476,17 @@ func applyFormats(schema *kin.Schema, obj formatable) {
 		}
 
 		prop.Value.WithFormat(fmt)
+	}
+}
+
+func applyEnums(schema *kin.Schema, obj enumerable) {
+	enums := obj.Enums()
+	for k, prop := range schema.Properties {
+		enum := enums[k]
+		if len(enum) == 0 || prop.Value == nil {
+			continue
+		}
+
+		prop.Value.WithEnum(enum)
 	}
 }

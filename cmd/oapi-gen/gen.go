@@ -22,6 +22,7 @@ const (
 	directiveReadonly = "readonly"
 	directiveRequired = "required"
 	directiveFormat   = "format"
+	directiveEnum     = "enum"
 )
 
 // Generator is a struct documentation generator. It gathers struct
@@ -78,10 +79,11 @@ type structInfo struct {
 	Docs    map[string]string
 	Attrs   map[string]string
 	Formats map[string]string
+	Enums   map[string][]string
 }
 
 func (i structInfo) Empty() bool {
-	return len(i.Docs) == 0 && len(i.Attrs) == 0 && len(i.Formats) == 0
+	return len(i.Docs) == 0 && len(i.Attrs) == 0 && len(i.Formats) == 0 && len(i.Enums) == 0
 }
 
 //nolint:cyclop,gocognit // Splitting this will not make it simpler.
@@ -155,6 +157,7 @@ func (g *Generator) gatherStructInfo(name string, typ *ast.StructType) (structIn
 		Docs:    map[string]string{},
 		Attrs:   map[string]string{},
 		Formats: map[string]string{},
+		Enums:   map[string][]string{},
 	}
 	for _, field := range typ.Fields.List {
 		if field.Doc == nil {
@@ -183,6 +186,17 @@ func (g *Generator) gatherStructInfo(name string, typ *ast.StructType) (structIn
 					return info, fmt.Errorf("format directive should be in format openapi:format=<format>, got %s", d)
 				}
 				info.Formats[fldName] = val
+			case strings.HasPrefix(d, directiveEnum):
+				_, val, found := strings.Cut(d, "=")
+				if !found {
+					return info, fmt.Errorf("enum directive should be in format openapi:enum=foo,bar, got %s", d)
+				}
+				// Split by comma and trim spaces
+				values := strings.Split(val, ",")
+				for i := range values {
+					values[i] = strings.TrimSpace(values[i])
+				}
+				info.Enums[fldName] = values
 			}
 		}
 	}
@@ -285,6 +299,16 @@ func ({{ .Name }}) Formats() map[string]string {
   return map[string]string {
   {{- range $k, $v := .Formats }}
     "{{ $k }}": "{{ $v }}",
+  {{- end }}
+  }
+}
+{{ end }}
+{{- if .Enums }}
+// Enums returns a set of possible enum values per property.
+func ({{ .Name }}) Enums() map[string][]string {
+  return map[string][]string {
+  {{- range $k, $v := .Enums }}
+    "{{ $k }}": { {{- range $i, $val := $v }}{{if $i}}, {{end}}"{{ $val }}"{{- end }} },
   {{- end }}
   }
 }
