@@ -185,7 +185,7 @@ type TestObject struct {
 
 func (TestObject) Docs() map[string]string {
 	return map[string]string{
-		"test1": "Some test docs",
+		"test1": "Test1 is an documented field with &#34;quotes&#34;\nand a newline.",
 	}
 }
 
