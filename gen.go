@@ -483,11 +483,7 @@ func applyEnums(schema *kin.Schema, obj enumerable) {
 	enums := obj.Enums()
 	for k, prop := range schema.Properties {
 		enum := enums[k]
-		if len(enum) == 0 {
-			continue
-		}
-
-		if prop.Value == nil {
+		if len(enum) == 0 || prop.Value == nil {
 			continue
 		}
 
