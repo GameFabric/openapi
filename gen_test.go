@@ -209,3 +209,9 @@ func (TestObject) Formats() map[string]string {
 		"test4": "ipv4",
 	}
 }
+
+func (TestObject) Enums() map[string][]string {
+	return map[string][]string{
+		"test4": []string{"192.168.1.0", "192.168.1.1"},
+	}
+}
