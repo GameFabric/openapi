@@ -1,24 +1,23 @@
+version: "2"
 run:
   tests: false
-  timeout: 5m
 
-linters-settings:
-  cyclop:
-    max-complexity: 15
-    skip-tests: true
-  lll:
-    line-length: 160
-  gofumpt:
-    extra-rules: true
-  gosec:
-    excludes:
-      - G601
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      extra-rules: true
+  exclusions:
+    generated: lax
 
 linters:
-  enable-all: true
+  default: all
   disable:
     - gocyclo # duplicate of cyclop
-    - tenv # deprecated
     - depguard
     - err113
     - exhaustive
@@ -28,16 +27,23 @@ linters:
     - gochecknoglobals
     - gochecknoinits
     - godox
-    - mnd
     - gomoddirectives
     - intrange
     - ireturn
-    - nlreturn
+    - mnd
     - nilnil
+    - nlreturn
     - nonamedreturns
     - varnamelen
     - wrapcheck
     - wsl
-
-issues:
-  exclude-use-default: false
+  settings:
+    cyclop:
+      max-complexity: 15
+    gosec:
+      excludes:
+        - G601
+    lll:
+      line-length: 160
+  exclusions:
+    generated: lax
