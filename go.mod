@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/fatih/structtag v1.2.0
 	github.com/getkin/kin-openapi v0.132.0
-	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/stretchr/testify v1.10.0
 )
 
