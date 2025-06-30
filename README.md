@@ -86,6 +86,7 @@ The following directives can be used on struct fields:
 * `openapi:required`: Marks the field as required.
 * `openapi:readonly`: Marks the field as read only.
 * `openapi:format=<FORMAT>`: Sets the format of the field, e.g. "date" or "ipv4". See [list of valid formats](https://spec.openapis.org/registry/format/).
+* `openapi:enum=1,2,3`: Sets the allowed enum values for this field.
 
 #### More Options
 
