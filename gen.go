@@ -487,6 +487,11 @@ func applyEnums(schema *kin.Schema, obj enumerable) {
 			continue
 		}
 
-		prop.Value.WithEnum(enum)
+		// Convert []string to []any and set directly on Enum field
+		enumValues := make([]any, len(enum))
+		for i, v := range enum {
+			enumValues[i] = v
+		}
+		prop.Value.Enum = enumValues
 	}
 }
