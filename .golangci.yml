@@ -33,10 +33,12 @@ linters:
     - mnd
     - nilnil
     - nlreturn
+    - noinlineerr
     - nonamedreturns
     - varnamelen
     - wrapcheck
     - wsl
+    - wsl_v5
   settings:
     cyclop:
       max-complexity: 15
