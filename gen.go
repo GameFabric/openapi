@@ -112,6 +112,7 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 		Summary:     op.doc,
 		OperationID: op.id,
 		Tags:        op.tags,
+		Deprecated:  op.deprecated,
 		Parameters:  params,
 		RequestBody: reqBody,
 		Responses:   responses,
