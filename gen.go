@@ -211,6 +211,7 @@ func (g *generator) toParams(params []Parameter) (kin.Parameters, error) {
 			Description: param.description,
 			Required:    param.required,
 			Schema:      schema,
+			Deprecated:  param.deprecated,
 		}}
 	}
 	return ret, nil

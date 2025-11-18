@@ -14,6 +14,7 @@ type Parameter struct {
 	name        string
 	description string
 	required    bool
+	deprecated  bool
 	typ         string
 	dataType    any
 }
@@ -35,6 +36,17 @@ func QueryParameter(name, description string, typ any) Parameter {
 		in:          kin.ParameterInQuery,
 		name:        name,
 		description: description,
+		dataType:    typ,
+	}
+}
+
+// DeprecatedQueryParameter returns a deprecated query parameter where the type will be resolved.
+func DeprecatedQueryParameter(name, description string, typ any) Parameter {
+	return Parameter{
+		in:          kin.ParameterInQuery,
+		name:        name,
+		description: description,
+		deprecated:  true,
 		dataType:    typ,
 	}
 }
