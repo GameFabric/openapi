@@ -112,6 +112,7 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 		Summary:     op.doc,
 		OperationID: op.id,
 		Tags:        op.tags,
+		Deprecated:  op.deprecated,
 		Parameters:  params,
 		RequestBody: reqBody,
 		Responses:   responses,
@@ -211,6 +212,7 @@ func (g *generator) toParams(params []Parameter) (kin.Parameters, error) {
 			Description: param.description,
 			Required:    param.required,
 			Schema:      schema,
+			Deprecated:  param.deprecated,
 		}}
 	}
 	return ret, nil

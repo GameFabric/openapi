@@ -14,6 +14,7 @@ type Parameter struct {
 	name        string
 	description string
 	required    bool
+	deprecated  bool
 	typ         string
 	dataType    any
 }
@@ -35,6 +36,17 @@ func QueryParameter(name, description string, typ any) Parameter {
 		in:          kin.ParameterInQuery,
 		name:        name,
 		description: description,
+		dataType:    typ,
+	}
+}
+
+// DeprecatedQueryParameter returns a deprecated query parameter where the type will be resolved.
+func DeprecatedQueryParameter(name, description string, typ any) Parameter {
+	return Parameter{
+		in:          kin.ParameterInQuery,
+		name:        name,
+		description: description,
+		deprecated:  true,
 		dataType:    typ,
 	}
 }
@@ -125,15 +137,16 @@ var (
 
 // Operation documents a request.
 type Operation struct {
-	id       string
-	tags     []string
-	doc      string
-	params   []Parameter
-	consumes []string
-	reads    any
-	produces []string
-	returns  []Response
-	security map[string]Security
+	id         string
+	tags       []string
+	doc        string
+	params     []Parameter
+	consumes   []string
+	reads      any
+	produces   []string
+	returns    []Response
+	security   map[string]Security
+	deprecated bool
 }
 
 // Merge merges the operation with the given operation.
@@ -143,6 +156,9 @@ func (o Operation) Merge(newOp Operation) Operation {
 	}
 	if newOp.doc != "" {
 		o.doc = newOp.doc
+	}
+	if newOp.deprecated {
+		o.deprecated = true
 	}
 	if len(newOp.tags) > 0 {
 		o.tags = append([]string{}, o.tags...)
@@ -262,6 +278,12 @@ func (o *OpBuilder) RequiresAuth(name string, sec Security) *OpBuilder {
 		o.op.security = map[string]Security{}
 	}
 	o.op.security[name] = sec
+	return o
+}
+
+// Deprecated marks the operation as deprecated.
+func (o *OpBuilder) Deprecated() *OpBuilder {
+	o.op.deprecated = true
 	return o
 }
 
