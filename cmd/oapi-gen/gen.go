@@ -217,9 +217,7 @@ func directives(cgs ...*ast.CommentGroup) []string {
 		}
 
 		for _, comment := range cg.List {
-			if strings.HasPrefix(comment.Text, prefix) {
-				s := strings.TrimPrefix(comment.Text, prefix)
-
+			if s, ok := strings.CutPrefix(comment.Text, prefix); ok {
 				// A directive should not contain spaces, ignore everything after the space.
 				s, _, _ = strings.Cut(s, " ")
 				if s == "" {
