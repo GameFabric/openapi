@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"maps"
 	"net/http"
 	"reflect"
 	"sync"
@@ -185,11 +186,9 @@ func (o Operation) Merge(newOp Operation) Operation {
 	}
 	if len(newOp.security) != 0 {
 		if o.security == nil {
-			o.security = map[string]Security{}
+			o.security = make(map[string]Security, len(newOp.security))
 		}
-		for k, v := range newOp.security {
-			o.security[k] = v
-		}
+		maps.Copy(o.security, newOp.security)
 	}
 	return o
 }
