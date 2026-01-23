@@ -1,0 +1,12 @@
+name: SBOM
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+
+jobs:
+  license:
+    uses: gamefabric/workflows/.github/workflows/sbom.yaml@v2
+    secrets: inherit
