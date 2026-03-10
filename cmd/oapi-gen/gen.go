@@ -9,7 +9,8 @@ import (
 	"go/parser"
 	"go/token"
 	"html/template"
-	"io/fs"
+	"os"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
@@ -86,32 +87,25 @@ func (i structInfo) Empty() bool {
 	return len(i.Docs) == 0 && len(i.Attrs) == 0 && len(i.Formats) == 0 && len(i.Enums) == 0
 }
 
-//nolint:cyclop,gocognit // Splitting this will not make it simpler.
+//nolint:gocognit // Splitting this will not make it simpler.
 func (g *Generator) gatherInfo(path string) (pkgInfo, error) {
 	fset := token.NewFileSet()
-	d, err := parser.ParseDir(fset, path, func(info fs.FileInfo) bool {
-		return !strings.HasSuffix(info.Name(), "_test.go")
-	}, parser.ParseComments)
+
+	files, err := parseDir(fset, path)
 	if err != nil {
 		return pkgInfo{}, fmt.Errorf("parsing source code: %w", err)
 	}
-
-	switch len(d) {
-	case 0:
-		return pkgInfo{}, errors.New("no package found")
-	case 1:
-	default:
-		return pkgInfo{}, errors.New("more than one package found")
+	if len(files) == 0 {
+		return pkgInfo{}, errors.New("no Go files found")
 	}
 
-	var pkgName string
-	for name := range d {
-		pkgName = name
-		break
-	}
+	pkg := pkgInfo{}
+	for _, f := range files {
+		if f.Name.Name != pkg.Pkg && pkg.Pkg != "" {
+			return pkgInfo{}, fmt.Errorf("multiple packages found: %s and %s", pkg.Pkg, f.Name.Name)
+		}
+		pkg.Pkg = f.Name.Name
 
-	pkg := pkgInfo{Pkg: pkgName}
-	for _, f := range d[pkgName].Files {
 		for _, node := range f.Decls {
 			if _, ok := node.(*ast.GenDecl); !ok {
 				continue
@@ -201,6 +195,27 @@ func (g *Generator) gatherStructInfo(name string, typ *ast.StructType) (structIn
 		}
 	}
 	return info, nil
+}
+
+// parseDir parses the Go files in the given directory, returning their ASTs.
+// While it is suggested to move to `packages`, this is more performant and sufficient for our use case.
+func parseDir(fset *token.FileSet, dir string) ([]*ast.File, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var files []*ast.File
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".go") || strings.HasSuffix(e.Name(), "_test.go") {
+			continue
+		}
+		f, err := parser.ParseFile(fset, filepath.Join(dir, e.Name()), nil, parser.ParseComments)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, f)
+	}
+	return files, nil
 }
 
 func directives(cgs ...*ast.CommentGroup) []string {

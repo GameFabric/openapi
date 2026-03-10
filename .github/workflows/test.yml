@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [ "1.24", "1.25" ]
+        go-version: [ "1.25", "1.26" ]
     env:
-      GOLANGCI_LINT_VERSION: v2.7.2
+      GOLANGCI_LINT_VERSION: v2.11.2
 
     steps:
       - name: Checkout code
@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
+          check-latest: true
 
       - name: Download dependencies
         run: go mod download
@@ -88,7 +89,7 @@ jobs:
           - os: windows
             arch: s390x
     env:
-      GO_VERSION: "1.24"
+      GO_VERSION: "1.25.8"
 
     steps:
       - name: Checkout code
