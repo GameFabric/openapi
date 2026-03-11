@@ -123,7 +123,7 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 
 func (g *generator) schema(obj any) (*kin.SchemaRef, error) {
 	t := reflect.TypeOf(obj)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
