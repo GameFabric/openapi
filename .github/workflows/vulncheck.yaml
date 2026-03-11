@@ -1,0 +1,31 @@
+name: Vulnerability
+
+permissions:
+  contents: read
+  id-token: write
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule: # Mondays at 04:00 UTC
+    - cron: '0 4 * * Mon'
+
+jobs:
+  govulncheck:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Go
+        id: install-go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Run govalncheck
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@latest ./...

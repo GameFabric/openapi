@@ -123,7 +123,7 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 
 func (g *generator) schema(obj any) (*kin.SchemaRef, error) {
 	t := reflect.TypeOf(obj)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
@@ -417,7 +417,7 @@ func applyType(name string, schema *kin.Schema, obj openAPIType) error {
 
 func applyOneOfTypes(schema *kin.Schema, obj oneOfTypes) {
 	typs := obj.OpenAPIV3OneOfTypes()
-	var refs kin.SchemaRefs
+	refs := make(kin.SchemaRefs, 0, len(typs))
 	for _, typ := range typs {
 		refs = append(refs, &kin.SchemaRef{Value: &kin.Schema{Type: &kin.Types{typ}}})
 	}
