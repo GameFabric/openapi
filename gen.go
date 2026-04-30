@@ -110,6 +110,7 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 
 	g.doc.AddOperation(path, method, &kin.Operation{
 		Summary:     op.doc,
+		Description: op.description,
 		OperationID: op.id,
 		Tags:        op.tags,
 		Deprecated:  op.deprecated,

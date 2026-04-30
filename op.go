@@ -138,16 +138,17 @@ var (
 
 // Operation documents a request.
 type Operation struct {
-	id         string
-	tags       []string
-	doc        string
-	params     []Parameter
-	consumes   []string
-	reads      any
-	produces   []string
-	returns    []Response
-	security   map[string]Security
-	deprecated bool
+	id          string
+	tags        []string
+	doc         string
+	description string
+	params      []Parameter
+	consumes    []string
+	reads       any
+	produces    []string
+	returns     []Response
+	security    map[string]Security
+	deprecated  bool
 }
 
 // Merge merges the operation with the given operation.
@@ -157,6 +158,9 @@ func (o Operation) Merge(newOp Operation) Operation {
 	}
 	if newOp.doc != "" {
 		o.doc = newOp.doc
+	}
+	if newOp.description != "" {
+		o.description = newOp.description
 	}
 	if newOp.deprecated {
 		o.deprecated = true
@@ -212,6 +216,12 @@ func (o *OpBuilder) ID(id string) *OpBuilder {
 // Doc sets the operation summary.
 func (o *OpBuilder) Doc(doc string) *OpBuilder {
 	o.op.doc = doc
+	return o
+}
+
+// Describe sets the operation Description (long explanation).
+func (o *OpBuilder) Describe(desc string) *OpBuilder {
+	o.op.description = desc
 	return o
 }
 

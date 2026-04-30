@@ -23,6 +23,7 @@ func Example() {
 		op := openapi.Op().
 			ID("test-id").
 			Doc("test").
+			Describe("Implements an example endpoint.").
 			Tag("test-tag").
 			Param(openapi.PathParameter("name", "the item name")).
 			Param(openapi.QueryParameter("filter", "the filter number", 123)).
