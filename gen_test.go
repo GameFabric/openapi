@@ -237,3 +237,33 @@ func (TestObject) Enums() map[string][]string {
 		"test4": {"192.168.1.0", "192.168.1.1"},
 	}
 }
+
+func TestDescribeField(t *testing.T) {
+	mux := chi.NewMux()
+
+	mux.Use(openapi.Op().Build())
+
+	mux.Route("/api", func(r chi.Router) {
+		op := openapi.Op().
+			ID("create-multiple-ips").
+			Doc("Creates multiple IPs").
+			Describe("Does not support partial success, if there is a single error none are created.")
+
+		r.With(op.Build()).Post("/ips", func(rw http.ResponseWriter, req *http.Request) {})
+	})
+
+	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
+		ObjPkgSegments: 1,
+	})
+	require.NoError(t, err)
+
+	ops := doc.Paths.Value("/api/ips").Operations()
+	require.Len(t, ops, 1)
+	require.Contains(t, ops, "POST")
+
+	opValue := ops["POST"]
+	require.NotNil(t, opValue)
+	assert.Equal(t, "create-multiple-ips", opValue.OperationID)
+	assert.Equal(t, "Creates multiple IPs", opValue.Summary)
+	assert.Equal(t, "Does not support partial success, if there is a single error none are created.", opValue.Description)
+}
