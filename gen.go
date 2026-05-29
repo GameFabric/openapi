@@ -490,11 +490,24 @@ func applyEnums(schema *kin.Schema, obj enumerable) {
 			continue
 		}
 
-		// Convert []string to []any and set directly on Enum field
+		// Convert []string to []any
 		enumValues := make([]any, len(enum))
 		for i, v := range enum {
 			enumValues[i] = v
 		}
+
+		// For arrays, enum constraints belong to the item schema
+		if prop.Value.Type.Is(kin.TypeArray) {
+			if prop.Value.Items == nil {
+				continue
+			}
+			// Items.Value is always non-nil here: kin-openapi only sets Value=nil for
+			// $ref-promoted structs, which are never array element types for enum fields
+			prop.Value.Items.Value.Enum = enumValues
+			continue
+		}
+
+		// For scalar types, apply enum directly
 		prop.Value.Enum = enumValues
 	}
 }

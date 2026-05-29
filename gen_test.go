@@ -199,10 +199,11 @@ type TestSimpleObject struct {
 }
 
 type TestObject struct {
-	Test1 string `json:"test1"`
-	Test2 string `json:"test2"`
-	Test3 string `json:"test3"`
-	Test4 string `json:"test4,omitempty"`
+	Test1 string   `json:"test1"`
+	Test2 string   `json:"test2"`
+	Test3 string   `json:"test3"`
+	Test4 string   `json:"test4,omitempty"`
+	Test5 []string `json:"test5,omitempty"`
 }
 
 func (TestObject) Docs() map[string]string {
@@ -235,6 +236,7 @@ func (TestObject) Formats() map[string]string {
 func (TestObject) Enums() map[string][]string {
 	return map[string][]string{
 		"test4": {"192.168.1.0", "192.168.1.1"},
+		"test5": {"alpha", "beta"},
 	}
 }
 
