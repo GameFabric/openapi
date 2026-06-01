@@ -43,6 +43,16 @@
             ],
             "format": "ipv4",
             "type": "string"
+          },
+          "test5": {
+            "items": {
+              "enum": [
+                "alpha",
+                "beta"
+              ],
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
