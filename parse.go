@@ -26,7 +26,6 @@ func ParseParams(obj any, tag string) []Parameter {
 
 	var params []Parameter
 	for f := range t.Fields() {
-		f := f
 		switch f.Type.Kind() {
 		case reflect.Interface, reflect.Struct, reflect.Pointer:
 			continue
