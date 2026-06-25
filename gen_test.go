@@ -39,7 +39,7 @@ func TestBuildSpec(t *testing.T) {
 			Produces("application/json", "application/xml").
 			Returns(http.StatusOK, "OK", &TestObject{}, openapi.WithResponseHeader("X-Request-Id")).
 			Returns(http.StatusNotFound, "Missing", &TestGenericObject[TestSimpleObject]{}).
-			Returns(http.StatusConflict, "Conflict", "", openapi.WithMediaTypes("application/octet-steam"))
+			Returns(http.StatusConflict, "Conflict", "", openapi.WithMediaTypes("application/octet-stream"))
 
 		r.With(op.Build()).Post("/test/{name}", func(rw http.ResponseWriter, req *http.Request) {})
 	})
@@ -60,7 +60,7 @@ func TestBuildSpec(t *testing.T) {
 			Produces("application/json", "application/xml").
 			Returns(http.StatusOK, "OK", &TestObject{}, openapi.WithResponseHeader("X-Request-Id")).
 			Returns(http.StatusNotFound, "Missing", &TestGenericObject[TestSimpleObject]{}).
-			Returns(http.StatusConflict, "Conflict", "", openapi.WithMediaTypes("application/octet-steam"))
+			Returns(http.StatusConflict, "Conflict", "", openapi.WithMediaTypes("application/octet-stream"))
 
 		r.With(op.Build()).Post("/test/{name}", func(rw http.ResponseWriter, req *http.Request) {})
 	})

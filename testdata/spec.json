@@ -170,7 +170,7 @@
           },
           "409": {
             "content": {
-              "application/octet-steam": {
+              "application/octet-stream": {
                 "schema": {
                   "type": "string"
                 }
@@ -334,7 +334,7 @@
           },
           "409": {
             "content": {
-              "application/octet-steam": {
+              "application/octet-stream": {
                 "schema": {
                   "type": "string"
                 }
