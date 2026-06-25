@@ -1,6 +1,8 @@
 name: Go Vulnerability Fix
 on:
-  workflow_call:
+  workflow_dispatch:
+  schedule: # Daily at 04:00 UTC
+    - cron: '0 4 * * *'
 
 jobs:
   vulnfix:
