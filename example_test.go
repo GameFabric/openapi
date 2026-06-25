@@ -41,13 +41,13 @@ func Example() {
 	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
 		StripPrefixes:  []string{"/internal"},
 		ObjPkgSegments: 1,
+		OpenAPIVersion: "3.1.0",
 	})
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
 	}
 
-	doc.OpenAPI = "3.0.0"
 	doc.Info = &kin.Info{
 		Title:   "Test Server",
 		Version: "1",

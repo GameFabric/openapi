@@ -1,8 +1,8 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "components": {
     "schemas": {
-      "openapi_test.TestGenericObject[openapi_test.TestSimpleObject]": {
+      "TestGenericObject[TestSimpleObject]": {
         "properties": {
           "test1": {
             "properties": {
@@ -18,12 +18,14 @@
         },
         "type": "object"
       },
-      "openapi_test.TestObject": {
-        "example": {
-          "test1": "a",
-          "test2": "b",
-          "test3": "c"
-        },
+      "TestObject": {
+        "examples": [
+          {
+            "test1": "a",
+            "test2": "b",
+            "test3": "c"
+          }
+        ],
         "properties": {
           "test1": {
             "description": "Test1 is an documented field with \u0026#34;quotes\u0026#34;\nand a newline.",
@@ -115,17 +117,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/openapi_test.TestObject"
+                "$ref": "#/components/schemas/TestObject"
               }
             },
             "text/html": {
               "schema": {
-                "$ref": "#/components/schemas/openapi_test.TestObject"
+                "$ref": "#/components/schemas/TestObject"
               }
             },
             "text/plain": {
               "schema": {
-                "$ref": "#/components/schemas/openapi_test.TestObject"
+                "$ref": "#/components/schemas/TestObject"
               }
             }
           },
@@ -136,12 +138,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestObject"
+                  "$ref": "#/components/schemas/TestObject"
                 }
               },
               "application/xml": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestObject"
+                  "$ref": "#/components/schemas/TestObject"
                 }
               }
             },
@@ -157,12 +159,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestGenericObject[openapi_test.TestSimpleObject]"
+                  "$ref": "#/components/schemas/TestGenericObject[TestSimpleObject]"
                 }
               },
               "application/xml": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestGenericObject[openapi_test.TestSimpleObject]"
+                  "$ref": "#/components/schemas/TestGenericObject[TestSimpleObject]"
                 }
               }
             },
@@ -279,17 +281,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/openapi_test.TestObject"
+                "$ref": "#/components/schemas/TestObject"
               }
             },
             "text/html": {
               "schema": {
-                "$ref": "#/components/schemas/openapi_test.TestObject"
+                "$ref": "#/components/schemas/TestObject"
               }
             },
             "text/plain": {
               "schema": {
-                "$ref": "#/components/schemas/openapi_test.TestObject"
+                "$ref": "#/components/schemas/TestObject"
               }
             }
           },
@@ -300,12 +302,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestObject"
+                  "$ref": "#/components/schemas/TestObject"
                 }
               },
               "application/xml": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestObject"
+                  "$ref": "#/components/schemas/TestObject"
                 }
               }
             },
@@ -321,12 +323,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestGenericObject[openapi_test.TestSimpleObject]"
+                  "$ref": "#/components/schemas/TestGenericObject[TestSimpleObject]"
                 }
               },
               "application/xml": {
                 "schema": {
-                  "$ref": "#/components/schemas/openapi_test.TestGenericObject[openapi_test.TestSimpleObject]"
+                  "$ref": "#/components/schemas/TestGenericObject[TestSimpleObject]"
                 }
               }
             },
