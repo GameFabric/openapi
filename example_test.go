@@ -41,6 +41,7 @@ func Example() {
 	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
 		StripPrefixes:  []string{"/internal"},
 		ObjPkgSegments: 1,
+		OpenAPIVersion: "3.0.0",
 	})
 	if err != nil {
 		log.Printf("Error: %v\n", err)

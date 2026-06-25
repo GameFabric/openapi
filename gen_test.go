@@ -5,7 +5,6 @@ import (
 	"flag"
 	"net/http"
 	"os"
-	"strconv"
 	"testing"
 
 	"github.com/gamefabric/openapi"
@@ -68,14 +67,54 @@ func TestBuildSpec(t *testing.T) {
 
 	mux.Get("/internal/handler", testHandler())
 
-	for i := range 2 {
-		t.Run("pkg segments "+strconv.Itoa(i), func(t *testing.T) {
+	tests := []struct {
+		name          string
+		specConfig    openapi.SpecConfig
+		wantMatchFile string
+	}{
+		{
+			name: "generates openapi v3.0.0, first segment",
+			specConfig: openapi.SpecConfig{
+				StripPrefixes:  []string{"/internal"},
+				ObjPkgSegments: 0,
+				OpenAPIVersion: "3.0.0",
+			},
+			wantMatchFile: "testdata/spec-pkgseg0.json",
+		},
+		{
+			name: "generates openapi v3.0.0, second segment",
+			specConfig: openapi.SpecConfig{
+				StripPrefixes:  []string{"/internal"},
+				ObjPkgSegments: 1,
+				OpenAPIVersion: "3.0.0",
+			},
+			wantMatchFile: "testdata/spec.json",
+		},
+		{
+			name: "generates openapi v3.1.0, first segment",
+			specConfig: openapi.SpecConfig{
+				StripPrefixes:  []string{"/internal"},
+				ObjPkgSegments: 0,
+				OpenAPIVersion: "3.1.0",
+			},
+			wantMatchFile: "testdata/spec-pkgseg0-3.1.0.json",
+		},
+		{
+			name: "generates openapi v3.1.0, second segment",
+			specConfig: openapi.SpecConfig{
+				StripPrefixes:  []string{"/internal"},
+				ObjPkgSegments: 1,
+				OpenAPIVersion: "3.1.0",
+			},
+			wantMatchFile: "testdata/spec-3.1.0.json",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
-				StripPrefixes:  []string{"/internal"},
-				ObjPkgSegments: i,
-			})
+			doc, err := openapi.BuildSpec(mux, test.specConfig)
 			require.NoError(t, err)
 
 			doc.OpenAPI = "3.0.0"
@@ -86,16 +125,11 @@ func TestBuildSpec(t *testing.T) {
 			got, err := json.MarshalIndent(doc, "", "  ")
 			require.NoError(t, err)
 
-			name := "testdata/spec.json"
-			if i != 1 {
-				name = "testdata/spec-pkgseg" + strconv.Itoa(i) + ".json"
-			}
-
 			if *update {
-				_ = os.WriteFile(name, got, 0o644)
+				_ = os.WriteFile(test.wantMatchFile, got, 0o644)
 			}
 
-			want, err := os.ReadFile(name)
+			want, err := os.ReadFile(test.wantMatchFile)
 			require.NoError(t, err)
 			assert.Equal(t, string(want), string(got))
 		})
@@ -148,6 +182,7 @@ func TestBuildSpecSecurity(t *testing.T) {
 
 	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
 		ObjPkgSegments: 1,
+		OpenAPIVersion: "3.0.0",
 	})
 	require.NoError(t, err)
 
@@ -256,6 +291,7 @@ func TestDescribeField(t *testing.T) {
 
 	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
 		ObjPkgSegments: 1,
+		OpenAPIVersion: "3.0.0",
 	})
 	require.NoError(t, err)
 

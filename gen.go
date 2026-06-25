@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"cmp"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -10,9 +11,12 @@ import (
 	"unicode"
 
 	kin "github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3conv"
 	kingen "github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/go-chi/chi/v5"
 )
+
+const ver = "3.1.0"
 
 // SpecConfig configures how the spec is built.
 type SpecConfig struct {
@@ -22,6 +26,14 @@ type SpecConfig struct {
 	// ObjPkgSegments determines the maximum number of
 	// package segments to use to identify an object.
 	ObjPkgSegments int
+
+	// OpenAPIVersion sets the OpenAPI version string in the output document,
+	// e.g. "3.0.0" or "3.1.0" (default). When a 3.1.x version is requested
+	// the document is upgraded via openapi3conv.Upgrade, which rewrites
+	// 3.0-specific schema constructs (nullable, boolean exclusive bounds,
+	// singular example) into their 3.1 equivalents before the version string
+	// is set.
+	OpenAPIVersion string
 }
 
 // BuildSpec builds openapi v3 spec from the given chi router.
@@ -63,7 +75,15 @@ func BuildSpec(r chi.Routes, cfg SpecConfig) (kin.T, error) {
 	if err != nil {
 		return kin.T{}, err
 	}
-	return gen.doc, nil
+
+	doc := gen.doc
+	version := cmp.Or(cfg.OpenAPIVersion, ver)
+	if strings.HasPrefix(version, "3.1") {
+		openapi3conv.Upgrade(&doc)
+		doc.OpenAPI = version
+	}
+
+	return doc, nil
 }
 
 type generator struct {
