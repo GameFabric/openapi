@@ -31,8 +31,7 @@ type SpecConfig struct {
 	// e.g. "3.0.0" or "3.1.0" (default). When a 3.1.x version is requested
 	// the document is upgraded via openapi3conv.Upgrade, which rewrites
 	// 3.0-specific schema constructs (nullable, boolean exclusive bounds,
-	// singular example) into their 3.1 equivalents before the version string
-	// is set.
+	// singular example) into their 3.1 equivalents.
 	OpenAPIVersion string
 }
 
