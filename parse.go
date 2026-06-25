@@ -25,7 +25,9 @@ func ParseParams(obj any, tag string) []Parameter {
 	})
 
 	var params []Parameter
-	for f := range t.Fields() {
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+
 		switch f.Type.Kind() {
 		case reflect.Interface, reflect.Struct, reflect.Pointer:
 			continue
