@@ -117,7 +117,6 @@ func TestBuildSpec(t *testing.T) {
 			doc, err := openapi.BuildSpec(mux, test.specConfig)
 			require.NoError(t, err)
 
-			doc.OpenAPI = "3.0.0"
 			doc.Info = &kin.Info{
 				Title:   "Test Server",
 				Version: "1",

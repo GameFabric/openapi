@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "components": {
     "schemas": {
       "TestGenericObject[TestSimpleObject]": {
@@ -19,11 +19,13 @@
         "type": "object"
       },
       "TestObject": {
-        "example": {
-          "test1": "a",
-          "test2": "b",
-          "test3": "c"
-        },
+        "examples": [
+          {
+            "test1": "a",
+            "test2": "b",
+            "test3": "c"
+          }
+        ],
         "properties": {
           "test1": {
             "description": "Test1 is an documented field with \u0026#34;quotes\u0026#34;\nand a newline.",

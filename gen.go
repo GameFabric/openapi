@@ -38,7 +38,9 @@ type SpecConfig struct {
 
 // BuildSpec builds openapi v3 spec from the given chi router.
 func BuildSpec(r chi.Routes, cfg SpecConfig) (kin.T, error) {
-	gen := newGenerator()
+	cfg.OpenAPIVersion = cmp.Or(cfg.OpenAPIVersion, ver)
+
+	gen := newGenerator(cfg.OpenAPIVersion)
 	gen.objPkgSegments = cfg.ObjPkgSegments
 
 	err := chi.Walk(r, func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
@@ -77,10 +79,9 @@ func BuildSpec(r chi.Routes, cfg SpecConfig) (kin.T, error) {
 	}
 
 	doc := gen.doc
-	version := cmp.Or(cfg.OpenAPIVersion, ver)
-	if strings.HasPrefix(version, "3.1") {
+	if strings.HasPrefix(cfg.OpenAPIVersion, "3.1") {
 		openapi3conv.Upgrade(&doc)
-		doc.OpenAPI = version
+		doc.OpenAPI = cfg.OpenAPIVersion
 	}
 
 	return doc, nil
@@ -93,14 +94,14 @@ type generator struct {
 	objPkgSegments int
 }
 
-func newGenerator() *generator {
+func newGenerator(ver string) *generator {
 	comp := kin.NewComponents()
 	comp.Schemas = kin.Schemas{}
 	comp.SecuritySchemes = kin.SecuritySchemes{}
 
 	return &generator{
 		doc: kin.T{
-			OpenAPI:    "3.0.0",
+			OpenAPI:    ver,
 			Components: &comp,
 		},
 		gen: kingen.NewGenerator(kingen.SchemaCustomizer(customizer)),
