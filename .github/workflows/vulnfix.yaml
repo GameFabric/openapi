@@ -24,24 +24,14 @@ jobs:
           password: ${{ secrets.GOPROXY_TOKEN }}
 
       - name: Install Go
+        id: install-go
         uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
-          cache: false
-
-      - name: Cache Go mod
-        id: gomod
-        uses: actions/cache/restore@v5
-        with:
-          path: |
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-mod-
 
       - name: Download dependencies
         run: go mod download
-        if: steps.gomod.outputs.cache-hit != 'true'
+        if: steps.install-go.outputs.cache-hit != 'true'
 
       - name: Install vulnfix
         run: go install github.com/hamba/vulnfix@latest

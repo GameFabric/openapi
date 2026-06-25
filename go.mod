@@ -1,6 +1,6 @@
 module github.com/gamefabric/openapi
 
-go 1.26.4
+go 1.25
 
 require (
 	github.com/fatih/structtag v1.2.0
