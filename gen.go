@@ -507,11 +507,9 @@ func applyEnums(schema *kin.Schema, obj enumerable) {
 		// For arrays, enum constraints belong to the item schema
 		if prop.Value.Type != nil &&
 			prop.Value.Type.Is(kin.TypeArray) {
-			if prop.Value.Items == nil {
+			if prop.Value.Items == nil || prop.Value.Items.Value == nil {
 				continue
 			}
-			// Items.Value is always non-nil here: kin-openapi only sets Value=nil for
-			// $ref-promoted structs, which are never array element types for enum fields
 			prop.Value.Items.Value.Enum = enumValues
 			continue
 		}
