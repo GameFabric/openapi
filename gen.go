@@ -103,7 +103,7 @@ func newGenerator(ver string) *generator {
 			OpenAPI:    ver,
 			Components: &comp,
 		},
-		gen: kingen.NewGenerator(kingen.SchemaCustomizer(customizer)),
+		gen: kingen.NewGenerator(kingen.SchemaCustomizer(customizer(ver))),
 	}
 }
 
@@ -390,40 +390,71 @@ type enumerable interface {
 	Enums() map[string][]string
 }
 
-func customizer(name string, t reflect.Type, _ reflect.StructTag, schema *kin.Schema) error {
-	v := reflect.New(t).Elem().Interface()
+// keyable is implemented by map types to declare allowed keys for the generated
+// schema. The customizer applies the returned keys as a propertyNames constraint
+// (OpenAPI 3.1), which restricts the keys of map/object schemas.
+//
+// Only applied for OpenAPI 3.1+ builds; silently omitted when building 3.0.x documents.
+type keyable interface {
+	AllowedKeys() []string
+}
 
-	if obj, ok := v.(openAPIType); ok {
-		if err := applyType(name, schema, obj); err != nil {
-			return err
+// customizer is a schema customizer factory that returns a SchemaCustomizerFn
+// configured for the given OpenAPI version. Returned by BuildSpec and exposed
+// for tests so the output schema for a keyable map can be inspected without
+// going through the full chi walk.
+func customizer(ver string) kingen.SchemaCustomizerFn {
+	return func(name string, t reflect.Type, _ reflect.StructTag, schema *kin.Schema) error {
+		v := reflect.New(t).Elem().Interface()
+
+		if obj, ok := v.(openAPIType); ok {
+			if err := applyType(name, schema, obj); err != nil {
+				return err
+			}
 		}
-	}
 
-	if obj, ok := v.(oneOfTypes); ok {
-		applyOneOfTypes(schema, obj)
-	}
+		if obj, ok := v.(oneOfTypes); ok {
+			applyOneOfTypes(schema, obj)
+		}
 
-	if obj, ok := v.(docable); ok {
-		applyDocs(schema, obj)
-	}
+		if obj, ok := v.(docable); ok {
+			applyDocs(schema, obj)
+		}
 
-	if obj, ok := v.(exemplar); ok {
-		applyExemplar(schema, obj)
-	}
+		if obj, ok := v.(exemplar); ok {
+			applyExemplar(schema, obj)
+		}
 
-	if obj, ok := v.(attrable); ok {
-		applyAttrs(schema, obj)
-	}
+		if obj, ok := v.(attrable); ok {
+			applyAttrs(schema, obj)
+		}
 
-	if obj, ok := v.(formatable); ok {
-		applyFormats(schema, obj)
-	}
+		if obj, ok := v.(formatable); ok {
+			applyFormats(schema, obj)
+		}
 
-	if obj, ok := v.(enumerable); ok {
-		applyEnums(schema, obj)
-	}
+		if obj, ok := v.(enumerable); ok {
+			applyEnums(schema, obj)
+		}
 
-	return nil
+		// propertyNames is an OpenAPI 3.1 feature; only apply it when
+		// the caller is building a 3.1.x document.
+		if strings.HasPrefix(ver, "3.1") && t.Kind() == reflect.Map {
+			if obj, ok := v.(keyable); ok {
+				keys := obj.AllowedKeys()
+				if len(keys) > 0 {
+					schema.PropertyNames = &kin.SchemaRef{
+						Value: &kin.Schema{
+							Type: &kin.Types{"string"},
+							Enum: stringsToAny(keys),
+						},
+					}
+				}
+			}
+		}
+
+		return nil
+	}
 }
 
 func applyType(name string, schema *kin.Schema, obj openAPIType) error {
@@ -502,6 +533,17 @@ func applyFormats(schema *kin.Schema, obj formatable) {
 	}
 }
 
+func stringsToAny(s []string) []any {
+	if len(s) == 0 {
+		return nil
+	}
+	out := make([]any, len(s))
+	for i, v := range s {
+		out[i] = v
+	}
+	return out
+}
+
 func applyEnums(schema *kin.Schema, obj enumerable) {
 	enums := obj.Enums()
 	for k, prop := range schema.Properties {
@@ -510,11 +552,7 @@ func applyEnums(schema *kin.Schema, obj enumerable) {
 			continue
 		}
 
-		// Convert []string to []any
-		enumValues := make([]any, len(enum))
-		for i, v := range enum {
-			enumValues[i] = v
-		}
+		enumValues := stringsToAny(enum)
 
 		// For arrays, enum constraints belong to the item schema
 		if prop.Value.Type.Is(kin.TypeArray) {

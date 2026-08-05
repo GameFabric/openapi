@@ -274,6 +274,74 @@ func (TestObject) Enums() map[string][]string {
 	}
 }
 
+type MapKeyTestSpec struct {
+	Config string `json:"config,omitempty"`
+}
+
+type MapKeyTestMap map[string]MapKeyTestSpec
+
+func (MapKeyTestMap) AllowedKeys() []string {
+	return []string{"pc", "ps4", "xbox", "ios", "android", "playstation", "switch"}
+}
+
+type MapKeyTestRoot struct {
+	Platforms MapKeyTestMap `json:"platforms"`
+}
+
+func TestBuildSpecMapKeyConstraint(t *testing.T) {
+	mux := chi.NewMux()
+
+	mux.Use(openapi.Op().
+		Consumes("application/json").
+		Produces("application/json").
+		Build())
+
+	mux.Route("/api", func(r chi.Router) {
+		op := openapi.Op().
+			ID("test-map-keys").
+			Doc("test map key constraint").
+			Reads(&MapKeyTestRoot{}).
+			Produces("application/json").
+			Returns(http.StatusOK, "OK", MapKeyTestRoot{})
+
+		r.With(op.Build()).Post("/platforms", func(rw http.ResponseWriter, req *http.Request) {})
+	})
+
+	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
+		ObjPkgSegments: 1,
+		OpenAPIVersion: "3.1.0",
+	})
+	require.NoError(t, err)
+
+	// Find the MapKeyTestRoot schema.
+	var specSchema *kin.SchemaRef
+	for name, ref := range doc.Components.Schemas {
+		if name == "openapi_test.MapKeyTestRoot" {
+			specSchema = ref
+			break
+		}
+	}
+	require.NotNil(t, specSchema, "MapKeyTestRoot schema should be registered")
+	require.NotNil(t, specSchema.Value)
+
+	// Verify the platforms field has propertyNames constraint.
+	platformsProp := specSchema.Value.Properties["platforms"]
+	require.NotNil(t, platformsProp)
+	require.NotNil(t, platformsProp.Value)
+
+	// propertyNames should be set with the allowed keys.
+	require.NotNil(t, platformsProp.Value.PropertyNames, "propertyNames should be set on platforms map")
+	require.NotNil(t, platformsProp.Value.PropertyNames.Value)
+	require.NotNil(t, platformsProp.Value.PropertyNames.Value.Type)
+	assert.Equal(t, kin.Types{"string"}, *platformsProp.Value.PropertyNames.Value.Type)
+
+	requiredKeys := []string{"pc", "ps4", "xbox", "ios", "android", "playstation", "switch"}
+	require.Len(t, platformsProp.Value.PropertyNames.Value.Enum, len(requiredKeys))
+	for _, k := range requiredKeys {
+		assert.Contains(t, platformsProp.Value.PropertyNames.Value.Enum, k)
+	}
+}
+
 func TestDescribeField(t *testing.T) {
 	mux := chi.NewMux()
 
