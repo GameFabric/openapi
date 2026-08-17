@@ -35,9 +35,6 @@ jobs:
         run: go mod download
         if: steps.install-go.outputs.cache-hit != 'true'
 
-      - name: Install vulnfix
-        run: go install github.com/hamba/vulnfix@latest
-
       - name: Run govulncheck
         # govulncheck exits 3 when vulnerabilities are found; we want to continue to vulnfix, so we ignore the exit code.
         run: |
@@ -52,6 +49,9 @@ jobs:
           check-latest: true
           cache: false
 
+      - name: Install vulnfix
+        run: go install github.com/hamba/vulnfix@latest
+
       - name: Run vulnfix
         run: vulnfix -o /tmp/vuln.md < /tmp/govulncheck-output.json
 
@@ -65,4 +65,3 @@ jobs:
           title: "chore(deps): fix vulnerabilities reported by govulncheck"
           body-path: /tmp/vuln.md
           labels: security,dependencies
-          draft: true
