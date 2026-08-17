@@ -65,4 +65,3 @@ jobs:
           title: "chore(deps): fix vulnerabilities reported by govulncheck"
           body-path: /tmp/vuln.md
           labels: security,dependencies
-          draft: true
