@@ -75,12 +75,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
-
       - name: Check matrix results
         if: ${{ contains(needs.test.result, 'failure') || contains(needs.test.result, 'cancelled') }}
         run: exit 1
