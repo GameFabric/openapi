@@ -110,7 +110,8 @@ documentation functions above implement several of these for you.
 
 | Method                                                         | Effect                                                                        |
 |----------------------------------------------------------------|-------------------------------------------------------------------------------|
-| `OpenAPISchemaType() []string`, `OpenAPISchemaFormat() string` | Sets the schema type and format, for types with a custom JSON representation. |
+| `OpenAPISchemaType() []string`                                 | Sets the schema type, for types with a custom JSON representation.            |
+| `OpenAPISchemaFormat() string`                                 | Sets the schema format, for types with a custom JSON representation.          |
 | `OpenAPIV3OneOfTypes() []string`                               | Sets the schema to a `oneOf` of the given types.                              |
 | `Example() any`                                                | Sets the schema example.                                                      |
 | `AllowedKeys() []string`                                       | Restricts the keys of a map type (`propertyNames`, OpenAPI 3.1 only).         |

@@ -93,7 +93,7 @@ type generator struct {
 
 	objPkgSegments int
 
-	genCtx map[string]any
+	genState map[string]any
 }
 
 func newGenerator(ver string) *generator {
@@ -106,12 +106,12 @@ func newGenerator(ver string) *generator {
 			OpenAPI:    ver,
 			Components: &comp,
 		},
-		genCtx: make(map[string]any),
+		genState: make(map[string]any),
 	}
 
 	g.gen = kingen.NewGenerator(
-		kingen.CreateTypeNameGenerator(typeNamer(g.genCtx)),
-		kingen.SchemaCustomizer(customizer(ver, g.genCtx)),
+		kingen.CreateTypeNameGenerator(typeNamer(g.genState)),
+		kingen.SchemaCustomizer(customizer(ver, g.genState)),
 	)
 	return g
 }
@@ -218,8 +218,8 @@ func isExported(name string) bool {
 }
 
 func (g *generator) cleanGeneratorContext() {
-	for k := range g.genCtx {
-		delete(g.genCtx, k)
+	for k := range g.genState {
+		delete(g.genState, k)
 	}
 }
 
