@@ -201,6 +201,117 @@ func TestBuildSpecSecurity(t *testing.T) {
 	assert.Equal(t, string(want), string(got))
 }
 
+func TestBuildSpecMapKeyConstraint(t *testing.T) {
+	mux := chi.NewMux()
+
+	mux.Use(openapi.Op().
+		Consumes("application/json").
+		Produces("application/json").
+		Build())
+
+	mux.Route("/api", func(r chi.Router) {
+		op := openapi.Op().
+			ID("test-map-keys").
+			Doc("test map key constraint").
+			Reads(&MapKeyTestRoot{}).
+			Produces("application/json").
+			Returns(http.StatusOK, "OK", MapKeyTestRoot{})
+
+		r.With(op.Build()).Post("/platforms", func(rw http.ResponseWriter, req *http.Request) {})
+	})
+
+	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
+		ObjPkgSegments: 1,
+		OpenAPIVersion: "3.1.0",
+	})
+	require.NoError(t, err)
+
+	// Find the MapKeyTestRoot schema.
+	var specSchema *kin.SchemaRef
+	for name, ref := range doc.Components.Schemas {
+		if name == "openapi_test.MapKeyTestRoot" {
+			specSchema = ref
+			break
+		}
+	}
+	require.NotNil(t, specSchema, "MapKeyTestRoot schema should be registered")
+	require.NotNil(t, specSchema.Value)
+
+	// Verify the platforms field has propertyNames constraint.
+	platformsProp := specSchema.Value.Properties["platforms"]
+	require.NotNil(t, platformsProp)
+	require.NotNil(t, platformsProp.Value)
+
+	// propertyNames should be set with the allowed keys.
+	require.NotNil(t, platformsProp.Value.PropertyNames, "propertyNames should be set on platforms map")
+	require.NotNil(t, platformsProp.Value.PropertyNames.Value)
+	require.NotNil(t, platformsProp.Value.PropertyNames.Value.Type)
+	assert.Equal(t, kin.Types{"string"}, *platformsProp.Value.PropertyNames.Value.Type)
+
+	requiredKeys := []string{"pc", "ps4", "xbox", "ios", "android", "playstation", "switch"}
+	require.Len(t, platformsProp.Value.PropertyNames.Value.Enum, len(requiredKeys))
+	for _, k := range requiredKeys {
+		assert.Contains(t, platformsProp.Value.PropertyNames.Value.Enum, k)
+	}
+}
+
+func TestDescribeField(t *testing.T) {
+	mux := chi.NewMux()
+
+	mux.Use(openapi.Op().Build())
+
+	mux.Route("/api", func(r chi.Router) {
+		op := openapi.Op().
+			ID("create-multiple-ips").
+			Doc("Creates multiple IPs").
+			Describe("Does not support partial success, if there is a single error none are created.")
+
+		r.With(op.Build()).Post("/ips", func(rw http.ResponseWriter, req *http.Request) {})
+	})
+
+	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
+		ObjPkgSegments: 1,
+		OpenAPIVersion: "3.0.0",
+	})
+	require.NoError(t, err)
+
+	ops := doc.Paths.Value("/api/ips").Operations()
+	require.Len(t, ops, 1)
+	require.Contains(t, ops, "POST")
+
+	opValue := ops["POST"]
+	require.NotNil(t, opValue)
+	assert.Equal(t, "create-multiple-ips", opValue.OperationID)
+	assert.Equal(t, "Creates multiple IPs", opValue.Summary)
+	assert.Equal(t, "Does not support partial success, if there is a single error none are created.", opValue.Description)
+}
+
+func TestBuildSpecContextTransform(t *testing.T) {
+	mux := chi.NewMux()
+	mux.Route("/api", func(r chi.Router) {
+		op := openapi.Op().
+			ID("test-ctx").
+			Doc("test context").
+			Consumes("application/json").
+			Produces("application/json").
+			Reads(&CtxTestRoot{}).
+			Returns(http.StatusNoContent, "No Content", nil)
+
+		r.With(op.Build()).Post("/ctx", func(rw http.ResponseWriter, req *http.Request) {})
+	})
+
+	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{ObjPkgSegments: 1})
+	require.NoError(t, err)
+
+	root := doc.Components.Schemas["openapi_test.CtxTestRoot"]
+	require.NotNil(t, root)
+	items := root.Value.Properties["items"]
+	require.NotNil(t, items)
+	leaf := items.Value.Items.Value.Properties["leaf"]
+	require.NotNil(t, leaf)
+	assert.Equal(t, "from root", leaf.Value.Description)
+}
+
 func testHandler() http.HandlerFunc {
 	type options struct {
 		PageSize int    `schema:"page_size"`
@@ -288,87 +399,24 @@ type MapKeyTestRoot struct {
 	Platforms MapKeyTestMap `json:"platforms"`
 }
 
-func TestBuildSpecMapKeyConstraint(t *testing.T) {
-	mux := chi.NewMux()
+type CtxTestLeaf struct {
+	Name string `json:"name"`
+}
 
-	mux.Use(openapi.Op().
-		Consumes("application/json").
-		Produces("application/json").
-		Build())
-
-	mux.Route("/api", func(r chi.Router) {
-		op := openapi.Op().
-			ID("test-map-keys").
-			Doc("test map key constraint").
-			Reads(&MapKeyTestRoot{}).
-			Produces("application/json").
-			Returns(http.StatusOK, "OK", MapKeyTestRoot{})
-
-		r.With(op.Build()).Post("/platforms", func(rw http.ResponseWriter, req *http.Request) {})
-	})
-
-	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
-		ObjPkgSegments: 1,
-		OpenAPIVersion: "3.1.0",
-	})
-	require.NoError(t, err)
-
-	// Find the MapKeyTestRoot schema.
-	var specSchema *kin.SchemaRef
-	for name, ref := range doc.Components.Schemas {
-		if name == "openapi_test.MapKeyTestRoot" {
-			specSchema = ref
-			break
-		}
-	}
-	require.NotNil(t, specSchema, "MapKeyTestRoot schema should be registered")
-	require.NotNil(t, specSchema.Value)
-
-	// Verify the platforms field has propertyNames constraint.
-	platformsProp := specSchema.Value.Properties["platforms"]
-	require.NotNil(t, platformsProp)
-	require.NotNil(t, platformsProp.Value)
-
-	// propertyNames should be set with the allowed keys.
-	require.NotNil(t, platformsProp.Value.PropertyNames, "propertyNames should be set on platforms map")
-	require.NotNil(t, platformsProp.Value.PropertyNames.Value)
-	require.NotNil(t, platformsProp.Value.PropertyNames.Value.Type)
-	assert.Equal(t, kin.Types{"string"}, *platformsProp.Value.PropertyNames.Value.Type)
-
-	requiredKeys := []string{"pc", "ps4", "xbox", "ios", "android", "playstation", "switch"}
-	require.Len(t, platformsProp.Value.PropertyNames.Value.Enum, len(requiredKeys))
-	for _, k := range requiredKeys {
-		assert.Contains(t, platformsProp.Value.PropertyNames.Value.Enum, k)
+func (CtxTestLeaf) Transform(ctx map[string]any, schema *kin.Schema) {
+	if v, ok := ctx["leaf-description"].(string); ok {
+		schema.Description = v
 	}
 }
 
-func TestDescribeField(t *testing.T) {
-	mux := chi.NewMux()
+type CtxTestMiddle struct {
+	Leaf CtxTestLeaf `json:"leaf"`
+}
 
-	mux.Use(openapi.Op().Build())
+type CtxTestRoot struct {
+	Items []CtxTestMiddle `json:"items"`
+}
 
-	mux.Route("/api", func(r chi.Router) {
-		op := openapi.Op().
-			ID("create-multiple-ips").
-			Doc("Creates multiple IPs").
-			Describe("Does not support partial success, if there is a single error none are created.")
-
-		r.With(op.Build()).Post("/ips", func(rw http.ResponseWriter, req *http.Request) {})
-	})
-
-	doc, err := openapi.BuildSpec(mux, openapi.SpecConfig{
-		ObjPkgSegments: 1,
-		OpenAPIVersion: "3.0.0",
-	})
-	require.NoError(t, err)
-
-	ops := doc.Paths.Value("/api/ips").Operations()
-	require.Len(t, ops, 1)
-	require.Contains(t, ops, "POST")
-
-	opValue := ops["POST"]
-	require.NotNil(t, opValue)
-	assert.Equal(t, "create-multiple-ips", opValue.OperationID)
-	assert.Equal(t, "Creates multiple IPs", opValue.Summary)
-	assert.Equal(t, "Does not support partial success, if there is a single error none are created.", opValue.Description)
+func (CtxTestRoot) OpenAPIContext() map[string]any {
+	return map[string]any{"leaf-description": "from root"}
 }

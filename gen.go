@@ -3,6 +3,7 @@ package openapi
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"net/http"
 	"reflect"
 	"sort"
@@ -91,6 +92,8 @@ type generator struct {
 	gen *kingen.Generator
 
 	objPkgSegments int
+
+	genCtx map[string]any
 }
 
 func newGenerator(ver string) *generator {
@@ -98,13 +101,19 @@ func newGenerator(ver string) *generator {
 	comp.Schemas = kin.Schemas{}
 	comp.SecuritySchemes = kin.SecuritySchemes{}
 
-	return &generator{
+	g := &generator{
 		doc: kin.T{
 			OpenAPI:    ver,
 			Components: &comp,
 		},
-		gen: kingen.NewGenerator(kingen.SchemaCustomizer(customizer(ver))),
+		genCtx: make(map[string]any),
 	}
+
+	g.gen = kingen.NewGenerator(
+		kingen.CreateTypeNameGenerator(typeNamer(g.genCtx)),
+		kingen.SchemaCustomizer(customizer(ver, g.genCtx)),
+	)
+	return g
 }
 
 func (g *generator) AddOperation(method, path string, op Operation) error {
@@ -143,6 +152,12 @@ func (g *generator) AddOperation(method, path string, op Operation) error {
 }
 
 func (g *generator) schema(obj any) (*kin.SchemaRef, error) {
+	// Clear the schema generation context for each new schema, so that nested types can
+	// be transformed with the context of their parent type. This is important for
+	// types that implement transformable, which can adjust the schema of nested types
+	// based on the context of their parent type.
+	g.cleanGeneratorContext()
+
 	t := reflect.TypeOf(obj)
 	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
@@ -200,6 +215,12 @@ func isExported(name string) bool {
 		return false
 	}
 	return !unicode.IsLower(runes[0])
+}
+
+func (g *generator) cleanGeneratorContext() {
+	for k := range g.genCtx {
+		delete(g.genCtx, k)
+	}
 }
 
 func (g *generator) toParams(params []Parameter) (kin.Parameters, error) {
@@ -370,6 +391,10 @@ type oneOfTypes interface {
 	OpenAPIV3OneOfTypes() []string
 }
 
+type contextable interface {
+	OpenAPIContext() map[string]any
+}
+
 type docable interface {
 	Docs() map[string]string
 }
@@ -390,6 +415,10 @@ type enumerable interface {
 	Enums() map[string][]string
 }
 
+type transformable interface {
+	Transform(ctx map[string]any, schema *kin.Schema)
+}
+
 // keyable is implemented by map types to declare allowed keys for the generated
 // schema. The customizer applies the returned keys as a propertyNames constraint
 // (OpenAPI 3.1), which restricts the keys of map/object schemas.
@@ -399,11 +428,30 @@ type keyable interface {
 	AllowedKeys() []string
 }
 
+// typeNamer returns a TypeNameGenerator that names types by their Go name.
+//
+// As a side effect, it collects the context of every type implementing contextable
+// into ctx. The generator names a type before generating the schemas of its fields,
+// so the context is available to the customizer when it runs for those nested
+// types, regardless of how deeply they are nested.
+func typeNamer(ctx map[string]any) kingen.TypeNameGenerator {
+	return func(t reflect.Type) string {
+		v := reflect.New(t).Elem().Interface()
+
+		if obj, ok := v.(contextable); ok {
+			maps.Copy(ctx, obj.OpenAPIContext())
+		}
+
+		return t.Name()
+	}
+}
+
 // customizer is a schema customizer factory that returns a SchemaCustomizerFn
-// configured for the given OpenAPI version. Returned by BuildSpec and exposed
-// for tests so the output schema for a keyable map can be inspected without
-// going through the full chi walk.
-func customizer(ver string) kingen.SchemaCustomizerFn {
+// configured for the given OpenAPI version. The ctx is the context collected by
+// typeNamer and is passed to transformable types, which allows an object to
+// adjust the schema of types nested within it. Exposed for tests so the output
+// schema can be inspected without going through the full chi walk.
+func customizer(ver string, ctx map[string]any) kingen.SchemaCustomizerFn {
 	return func(name string, t reflect.Type, _ reflect.StructTag, schema *kin.Schema) error {
 		v := reflect.New(t).Elem().Interface()
 
@@ -453,6 +501,11 @@ func customizer(ver string) kingen.SchemaCustomizerFn {
 			}
 		}
 
+		// Run Transform after all other schema customizations have been applied so
+		// that the object can make final adjustments to the schema.
+		if obj, ok := v.(transformable); ok {
+			obj.Transform(ctx, schema)
+		}
 		return nil
 	}
 }
